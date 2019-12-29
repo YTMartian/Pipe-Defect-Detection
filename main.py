@@ -3,6 +3,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from resources import *
+import time
 import sys
 
 
@@ -14,7 +15,10 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(":/app"))
         self.setMinimumSize(1280, 720)
         self.setStyleSheet('''background-color:white''')
-        # self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
+        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
+        self.is_maximized = False
+        self.origin_size = self.size()
+        self.position = self.pos()
 
         self.main_widget = QtWidgets.QWidget()  # main window.
         self.main_layout = QtWidgets.QGridLayout()  # create main window layout.
@@ -59,9 +63,10 @@ class MainWindow(QMainWindow):
                 background:red;
             }
         ''')
-        self.top_enlarge = QtWidgets.QPushButton('o')  # enlarge window button.
-        self.top_enlarge.setFixedSize(25, 25)
-        self.top_enlarge.setStyleSheet('''
+        self.top_close.clicked.connect(self.top_close_clicked)
+        self.top_maximize = QtWidgets.QPushButton('o')  # enlarge window button.
+        self.top_maximize.setFixedSize(25, 25)
+        self.top_maximize.setStyleSheet('''
             QPushButton{
                 background:#6DDF6D;
                 border-radius:5px;
@@ -72,6 +77,7 @@ class MainWindow(QMainWindow):
                 background:#5cce5a;
             }
         ''')
+        self.top_maximize.clicked.connect(self.top_maximize_clicked)
         self.top_minimize = QtWidgets.QPushButton('-')  # minimize window button.
         self.top_minimize.setFixedSize(25, 25)
         self.top_minimize.setStyleSheet('''
@@ -85,14 +91,33 @@ class MainWindow(QMainWindow):
                 background:#efef00;
             }
         ''')
+        self.top_minimize.clicked.connect(self.top_minimize_clicked)
 
         self.main_layout.addWidget(self.top_widget, 0, 10)  # 2 rows, 10 columns
         self.main_layout.addWidget(self.left_widget, 2, 5, 11, 3)
         self.setCentralWidget(self.main_widget)  # set main window's main widget.
 
         self.top_layout.addWidget(self.top_minimize)
-        self.top_layout.addWidget(self.top_enlarge)
+        self.top_layout.addWidget(self.top_maximize)
         self.top_layout.addWidget(self.top_close)
+
+    def top_close_clicked(self):
+        time.sleep(0.3)
+        self.close()
+
+    def top_minimize_clicked(self):
+        self.showMinimized()
+
+    def top_maximize_clicked(self):
+        print(self.pos())
+        if self.is_maximized:
+            self.resize(self.origin_size.width(), self.origin_size.height())
+            self.move(self.position.x(), self.position.y())
+        else:
+            self.origin_size = self.size()
+            self.showMaximized()
+        self.position = self.pos()
+        self.is_maximized = False if self.is_maximized else True
 
 
 def main():
