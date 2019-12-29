@@ -1,4 +1,6 @@
+from PyQt5.QtWidgets import QDesktopWidget
 from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
@@ -17,8 +19,6 @@ class MainWindow(QMainWindow):
         self.setStyleSheet('''background-color:white''')
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
         self.is_maximized = False
-        self.origin_size = self.size()
-        self.position = self.pos()
 
         self.main_widget = QtWidgets.QWidget()  # main window.
         self.main_layout = QtWidgets.QGridLayout()  # create main window layout.
@@ -46,12 +46,13 @@ class MainWindow(QMainWindow):
         self.left_widget.setStyleSheet('''
             QWidget#left_widget{
                 color:#232C51;
-                background:#dddd00;
+                background:#d55ddd;
             }
         ''')
 
-        self.top_close = QtWidgets.QPushButton('x')  # close window button.
-        self.top_close.setFixedSize(25, 25)
+        self.top_close = QtWidgets.QPushButton()  # close window button.
+        self.top_close.setFixedSize(30, 30)
+        self.top_close.setIcon(QIcon(":/close"))
         self.top_close.setStyleSheet('''
             QPushButton{
                 background:#F76677;
@@ -64,8 +65,9 @@ class MainWindow(QMainWindow):
             }
         ''')
         self.top_close.clicked.connect(self.top_close_clicked)
-        self.top_maximize = QtWidgets.QPushButton('o')  # enlarge window button.
-        self.top_maximize.setFixedSize(25, 25)
+        self.top_maximize = QtWidgets.QPushButton()  # enlarge window button.
+        self.top_maximize.setIcon(QIcon(":/maximize"))
+        self.top_maximize.setFixedSize(30, 30)
         self.top_maximize.setStyleSheet('''
             QPushButton{
                 background:#6DDF6D;
@@ -78,46 +80,40 @@ class MainWindow(QMainWindow):
             }
         ''')
         self.top_maximize.clicked.connect(self.top_maximize_clicked)
-        self.top_minimize = QtWidgets.QPushButton('-')  # minimize window button.
-        self.top_minimize.setFixedSize(25, 25)
+        self.top_minimize = QtWidgets.QPushButton()  # minimize window button.
+        self.top_minimize.setFixedSize(30, 30)
+        self.top_minimize.setIcon(QIcon(":/minimize"))
         self.top_minimize.setStyleSheet('''
             QPushButton{
                 background:#ffef00;
                 border-radius:5px;
                 color:white;
-                padding-bottom:2px;
             }
             QPushButton:hover{
                 background:#efef00;
             }
         ''')
-        self.top_minimize.clicked.connect(self.top_minimize_clicked)
+        self.top_minimize.clicked.connect(self.showMinimized)
 
-        self.main_layout.addWidget(self.top_widget, 0, 10)  # 2 rows, 10 columns
-        self.main_layout.addWidget(self.left_widget, 2, 5, 11, 3)
+        self.main_layout.addWidget(self.top_widget, 0, 0, 1, 10)  # start from (x1,y1) and occupy (x2,y2)
+        self.main_layout.addWidget(self.left_widget, 1, 0, 11, 2)
         self.setCentralWidget(self.main_widget)  # set main window's main widget.
 
         self.top_layout.addWidget(self.top_minimize)
         self.top_layout.addWidget(self.top_maximize)
         self.top_layout.addWidget(self.top_close)
 
+    @staticmethod
     def top_close_clicked(self):
-        time.sleep(0.3)
-        self.close()
-
-    def top_minimize_clicked(self):
-        self.showMinimized()
+        time.sleep(0.1)
+        exit()
 
     def top_maximize_clicked(self):
-        print(self.pos())
         if self.is_maximized:
-            self.resize(self.origin_size.width(), self.origin_size.height())
-            self.move(self.position.x(), self.position.y())
+            self.showNormal()
         else:
-            self.origin_size = self.size()
             self.showMaximized()
-        self.position = self.pos()
-        self.is_maximized = False if self.is_maximized else True
+        self.is_maximized = not self.is_maximized
 
 
 def main():
