@@ -146,6 +146,8 @@ class MainWindow(QMainWindow):
         top_widget_height = self.top_widget.size().height()
         now_mouse_y = event.globalPos().y() - self.pos().y()
         if event.button() == QtCore.Qt.LeftButton and now_mouse_y < top_widget_height:
+            if self.is_maximized:
+                return
             self.move_window_flag = True
             self.move_position = event.globalPos() - self.pos()  # get mouse position relative to window.
             event.accept()  # it means the event is handled.
@@ -157,6 +159,18 @@ class MainWindow(QMainWindow):
 
     def mouseReleaseEvent(self, QMouseEvent):
         self.move_window_flag = False
+
+    def mouseDoubleClickEvent(self, event):
+        top_widget_height = self.top_widget.size().height()
+        now_mouse_y = event.globalPos().y() - self.pos().y()
+        if now_mouse_y < top_widget_height:
+            if self.is_maximized:
+                self.showNormal()
+                self.top_maximize.setToolTip('最大化')
+            else:
+                self.showMaximized()
+                self.top_maximize.setToolTip('还原')
+            self.is_maximized = not self.is_maximized
 
 
 def main():
