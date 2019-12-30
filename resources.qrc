@@ -5,6 +5,7 @@
 <file alias="close">resources/close.png</file>
 <file alias="maximize">resources/maximize.png</file>
 <file alias="minimize">resources/minimize.png</file>
+<file alias="background">resources/background.jpg</file>
  
 </qresource>
 </RCC>
