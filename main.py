@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect
 from PyQt5.QtCore import pyqtSignal, QPoint
-from PyQt5.QtGui import QIcon, QColor, QCursor, QEnterEvent
+from PyQt5.QtGui import QIcon, QColor, QCursor, QEnterEvent, QPainter, QPen
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -16,19 +16,37 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Pipe Defect Detection')
         self.setWindowIcon(QIcon(':/app'))
         self.setMinimumSize(1280, 720)
-        self.background = QtGui.QPalette()
-        self.background.setBrush(self.backgroundRole(), QtGui.QBrush(QtGui.QPixmap(':/background')))
-        self.setPalette(self.background)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
-        self.is_maximized = False
         self.setMouseTracking(True)
         self.move_window_flag = False
         self.move_position = None
+        self.mouse_position = None
+
+        # below is to resize window.
+        self.margin = 10  # can adjust window size when mouse at the margin 5 pixels.
+        self.direction = None
+        self.pressed = False
+        self.margin_top = 0
+        self.margin_bottom = 1
+        self.margin_left = 2
+        self.margin_right = 3
+        self.margin_left_top = 4
+        self.margin_left_bottom = 5
+        self.margin_right_top = 6
+        self.margin_right_bottom = 7
+        self.installEventFilter(self)
 
         self.main_widget = QtWidgets.QWidget()  # main window.
+        background = QtGui.QPalette()
+        background.setBrush(self.main_widget.backgroundRole(), QtGui.QBrush(QtGui.QPixmap(':/background')))
+        self.main_widget.setAutoFillBackground(True)
+        self.main_widget.setPalette(background)
         self.main_layout = QtWidgets.QGridLayout()  # create main window layout.
         self.main_layout.setSpacing(0)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)  # the margin between layout and main window.
+        self.main_layout.setContentsMargins(
+            self.margin, self.margin, self.margin, self.margin)  # the margin between layout and main window.
         self.main_widget.setLayout(self.main_layout)  # set main window layout.
 
         self.top_widget = QtWidgets.QWidget()  # create top part widget.
@@ -67,10 +85,10 @@ class MainWindow(QMainWindow):
                 border-radius:5px;
                 color:white;
                 padding-bottom:2px;
-                background-image:url(:/minimize);
+                background-image:url(:/close);
             }
             QPushButton:hover{
-                background-image:url(:/close);
+                background-image:url(:/close_hover);
                 background-repeat:no-repeat center
             }
         ''')
@@ -82,13 +100,13 @@ class MainWindow(QMainWindow):
         self.top_maximize.setCursor(QCursor(QtCore.Qt.PointingHandCursor))  # set cursor when hover.
         self.top_maximize.setStyleSheet('''
             QPushButton{
-                background-image:url(:/close);
+                background-image:url(:/maximize);
                 border-radius:5px;
                 color:white;
                 padding-bottom:2px;
             }
             QPushButton:hover{
-                background-image:url(:/maximize);
+                background-image:url(:/maximize_hover);
                 background-repeat:no-repeat center
             }
         ''')
@@ -103,10 +121,10 @@ class MainWindow(QMainWindow):
                 background-color:transparent;
                 border-radius:5px;
                 color:white;
-                background-image:url(:/maximize);
+                background-image:url(:/minimize);
             }
             QPushButton:hover{
-                background-image:url(:/minimize);
+                background-image:url(:/minimize_hover);
                 background-repeat:no-repeat center
             }
         ''')
@@ -126,51 +144,175 @@ class MainWindow(QMainWindow):
         exit()
 
     def top_maximize_clicked(self):
-        if self.is_maximized:
+        if self.isMaximized():
             self.showNormal()
             self.top_maximize.setToolTip('最大化')
         else:
             self.showMaximized()
             self.top_maximize.setToolTip('还原')
-        self.is_maximized = not self.is_maximized
 
-    # def eventFilter(self, obj, event):
-    #     print(event.type())
-    #     if event.type() == QtCore.QEvent.HoverMove:
-    #         if obj==self.top_widget:
-    #             print('fffff')
-    #         return True
-    #     return False
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.HoverMove:
+            if self.pressed:
+                return True
+            x = event.pos().x()
+            y = event.pos().y()
+            # print(x, y)
+            if x < self.margin:
+                if y < self.margin:
+                    self.direction = self.margin_left_top
+                    self.setCursor(QtCore.Qt.SizeFDiagCursor)
+                elif y > self.height() - self.margin:
+                    self.direction = self.margin_left_bottom
+                    self.setCursor(QtCore.Qt.SizeBDiagCursor)
+                else:
+                    self.direction = self.margin_left
+                    self.setCursor(QtCore.Qt.SizeHorCursor)
+            elif x > self.width() - self.margin:
+                if y < self.margin:
+                    self.direction = self.margin_right_top
+                    self.setCursor(QtCore.Qt.SizeBDiagCursor)
+                elif y > self.height() - self.margin:
+                    self.direction = self.margin_right_bottom
+                    self.setCursor(QtCore.Qt.SizeFDiagCursor)
+                else:
+                    self.direction = self.margin_right
+                    self.setCursor(QtCore.Qt.SizeHorCursor)
+            elif y < self.margin and self.direction is None:
+                self.direction = self.margin_top
+                self.setCursor(QtCore.Qt.SizeVerCursor)
+            elif y > self.height() - self.margin and self.direction is None:
+                self.direction = self.margin_bottom
+                self.setCursor(QtCore.Qt.SizeVerCursor)
+            else:
+                self.direction = None
+                self.setCursor(QtCore.Qt.ArrowCursor)
+            return True
+        return False
 
     def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.pressed = True
+            self.mouse_position = event.pos()
         top_widget_height = self.top_widget.size().height()
         now_mouse_y = event.globalPos().y() - self.pos().y()
         if event.button() == QtCore.Qt.LeftButton and now_mouse_y < top_widget_height:
-            if self.is_maximized:
+            if self.isMaximized():
                 return
             self.move_window_flag = True
             self.move_position = event.globalPos() - self.pos()  # get mouse position relative to window.
             event.accept()  # it means the event is handled.
 
-    def mouseMoveEvent(self, QMouseEvent):
-        if QtCore.Qt.LeftButton and self.move_window_flag:
-            self.move(QMouseEvent.globalPos() - self.move_position)
-            QMouseEvent.accept()
+    def mouseMoveEvent(self, event):
+        super(MainWindow, self).mouseMoveEvent(event)
+        if event.buttons() == QtCore.Qt.LeftButton and self.direction is not None:
+            if self.isMaximized():
+                return
+            if self.pressed:
+                self.resize_window(self, event.pos())
+                return
+            x = event.pos().x()
+            y = event.pos().y()
+            if x < self.margin:
+                if y < self.margin:
+                    self.direction = self.margin_left_top
+                elif y > self.height() - self.margin:
+                    self.direction = self.margin_left_bottom
+                else:
+                    self.direction = self.margin_left
+            elif x > self.width() - self.margin:
+                if y < self.margin:
+                    self.direction = self.margin_right_top
+                elif y > self.height() - self.margin:
+                    self.direction = self.margin_right_bottom
+                else:
+                    self.direction = self.margin_right
+            elif y < self.margin and self.direction is None:
+                self.direction = self.margin_top
+            elif y > self.height() - self.margin and self.direction is None:
+                self.direction = self.margin_bottom
+            elif not self.pressed:
+                self.direction = None
+            self.resize_window(self, event.pos())
+            return
+        elif event.buttons() == QtCore.Qt.LeftButton and self.move_window_flag:
+            self.move(event.globalPos() - self.move_position)
 
     def mouseReleaseEvent(self, QMouseEvent):
         self.move_window_flag = False
+        self.pressed = False
+        self.direction = None
 
     def mouseDoubleClickEvent(self, event):
         top_widget_height = self.top_widget.size().height()
         now_mouse_y = event.globalPos().y() - self.pos().y()
         if now_mouse_y < top_widget_height:
-            if self.is_maximized:
+            if self.isMaximized():
                 self.showNormal()
                 self.top_maximize.setToolTip('最大化')
             else:
                 self.showMaximized()
                 self.top_maximize.setToolTip('还原')
-            self.is_maximized = not self.is_maximized
+
+    @staticmethod
+    def resize_window(self, pos):
+        pos_ = pos - self.mouse_position
+        pos_x, pos_y = pos_.x(), pos_.y()
+        geometry = self.geometry()
+        x, y, w, h = geometry.x(), geometry.y(), geometry.width(), geometry.height()
+        if self.direction == self.margin_left_top:  # 左上角
+            if w - pos_x > self.minimumWidth():
+                x += pos_x
+                w -= pos_x
+            if h - pos_y > self.minimumHeight():
+                y += pos_y
+                h -= pos_y
+        elif self.direction == self.margin_right_bottom:  # 右下角
+            if w + pos_x > self.minimumWidth():
+                w += pos_x
+                self.mouse_position = pos
+            if h + pos_y > self.minimumHeight():
+                h += pos_y
+                self.mouse_position = pos
+        elif self.direction == self.margin_right_top:  # 右上角
+            if h - pos_y > self.minimumHeight():
+                y += pos_y
+                h -= pos_y
+            if w + pos_x > self.minimumWidth():
+                w += pos_x
+                self.mouse_position.setX(pos.x())
+        elif self.direction == self.margin_left_bottom:  # 左下角
+            if w - pos_x > self.minimumWidth():
+                x += pos_x
+                w -= pos_x
+            if h + pos_y > self.minimumHeight():
+                h += pos_y
+                self.mouse_position.setY(pos.y())
+        elif self.direction == self.margin_left:  # 左边
+            if w - pos_x > self.minimumWidth():
+                x += pos_x
+                w -= pos_x
+            else:
+                return
+        elif self.direction == self.margin_right:  # 右边
+            if w + pos_x > self.minimumWidth():
+                w += pos_x
+                self.mouse_position = pos
+            else:
+                return
+        elif self.direction == self.margin_top:  # 上面
+            if h - pos_y > self.minimumHeight():
+                y += pos_y
+                h -= pos_y
+            else:
+                return
+        elif self.direction == self.margin_bottom:  # 下面
+            if h + pos_y > self.minimumHeight():
+                h += pos_y
+                self.mouse_position = pos
+            else:
+                return
+        self.setGeometry(x, y, w, h)
 
 
 def main():

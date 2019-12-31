@@ -3,8 +3,11 @@
  
 <file alias="app">resources/label.ico</file>
 <file alias="close">resources/close.png</file>
+<file alias="close_hover">resources/close_hover.png</file>
 <file alias="maximize">resources/maximize.png</file>
+<file alias="maximize_hover">resources/maximize_hover.png</file>
 <file alias="minimize">resources/minimize.png</file>
+<file alias="minimize_hover">resources/minimize_hover.png</file>
 <file alias="background">resources/background.jpg</file>
  
 </qresource>
