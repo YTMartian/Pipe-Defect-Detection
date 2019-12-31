@@ -142,7 +142,11 @@ class MainWindow(QMainWindow):
         self.app = QLabel()
         self.app.setPixmap(QPixmap(':/app'))
         self.app.setContentsMargins(0, 20, 0, 0)
-        self.left_layout.addWidget(self.app, 1, 0, 1, 1, QtCore.Qt.AlignTop)
+        self.left_layout.addWidget(self.app, 1, 0, 10, 10, QtCore.Qt.AlignTop)
+        self.test = QLabel()
+        self.test.setText('工程列表')
+        self.test.setStyleSheet('''QLabel{}''')
+        self.left_layout.addWidget(self.test, 2, 5, 1, 1, QtCore.Qt.AlignCenter)
 
     @staticmethod
     def top_close_clicked(self):
@@ -204,7 +208,14 @@ class MainWindow(QMainWindow):
         now_mouse_y = event.globalPos().y() - self.pos().y()
         if event.button() == QtCore.Qt.LeftButton and now_mouse_y < top_widget_height:
             if self.isMaximized():
-                return
+                self.showNormal()
+                print(event.globalPos().x(), "---", self.move_position.x())
+                x1 = event.globalPos().x()
+                x2 = self.move_position.x()
+                if x1 < x2:
+                    self.move(0, event.globalPos().y() - self.move_position.y())
+                else:
+                    self.move((x1 - x2) / 1.2, event.globalPos().y() - self.move_position.y())
             self.move_window_flag = True
             self.move_position = event.globalPos() - self.pos()  # get mouse position relative to window.
             event.accept()  # it means the event is handled.
