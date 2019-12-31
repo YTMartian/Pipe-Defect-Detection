@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         self.mouse_position = None
 
         # below is to resize window.
-        self.margin = 10  # can adjust window size when mouse at the margin 5 pixels.
+        self.margin = 2  # can adjust window size when mouse at the margin 5 pixels.
         self.direction = None
         self.pressed = False
         self.margin_top = 0
@@ -260,53 +260,53 @@ class MainWindow(QMainWindow):
         pos_x, pos_y = pos_.x(), pos_.y()
         geometry = self.geometry()
         x, y, w, h = geometry.x(), geometry.y(), geometry.width(), geometry.height()
-        if self.direction == self.margin_left_top:  # 左上角
+        if self.direction == self.margin_left_top:
             if w - pos_x > self.minimumWidth():
                 x += pos_x
                 w -= pos_x
             if h - pos_y > self.minimumHeight():
                 y += pos_y
                 h -= pos_y
-        elif self.direction == self.margin_right_bottom:  # 右下角
+        elif self.direction == self.margin_right_bottom:
             if w + pos_x > self.minimumWidth():
                 w += pos_x
                 self.mouse_position = pos
             if h + pos_y > self.minimumHeight():
                 h += pos_y
                 self.mouse_position = pos
-        elif self.direction == self.margin_right_top:  # 右上角
+        elif self.direction == self.margin_right_top:
             if h - pos_y > self.minimumHeight():
                 y += pos_y
                 h -= pos_y
             if w + pos_x > self.minimumWidth():
                 w += pos_x
                 self.mouse_position.setX(pos.x())
-        elif self.direction == self.margin_left_bottom:  # 左下角
+        elif self.direction == self.margin_left_bottom:
             if w - pos_x > self.minimumWidth():
                 x += pos_x
                 w -= pos_x
             if h + pos_y > self.minimumHeight():
                 h += pos_y
                 self.mouse_position.setY(pos.y())
-        elif self.direction == self.margin_left:  # 左边
+        elif self.direction == self.margin_left:
             if w - pos_x > self.minimumWidth():
                 x += pos_x
                 w -= pos_x
             else:
                 return
-        elif self.direction == self.margin_right:  # 右边
+        elif self.direction == self.margin_right:
             if w + pos_x > self.minimumWidth():
                 w += pos_x
                 self.mouse_position = pos
             else:
                 return
-        elif self.direction == self.margin_top:  # 上面
+        elif self.direction == self.margin_top:
             if h - pos_y > self.minimumHeight():
                 y += pos_y
                 h -= pos_y
             else:
                 return
-        elif self.direction == self.margin_bottom:  # 下面
+        elif self.direction == self.margin_bottom:
             if h + pos_y > self.minimumHeight():
                 h += pos_y
                 self.mouse_position = pos
