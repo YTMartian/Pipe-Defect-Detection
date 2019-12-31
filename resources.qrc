@@ -1,7 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
  
-<file alias="app">resources/label.ico</file>
+<file alias="app">resources/app.png</file>
+<file alias="app_icon">resources/app_icon.png</file>
 <file alias="close">resources/close.png</file>
 <file alias="close_hover">resources/close_hover.png</file>
 <file alias="maximize">resources/maximize.png</file>

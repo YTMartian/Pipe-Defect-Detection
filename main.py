@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtCore import pyqtSignal, QPoint
-from PyQt5.QtGui import QIcon, QColor, QCursor, QEnterEvent, QPainter, QPen
+from PyQt5.QtGui import QIcon, QColor, QCursor, QEnterEvent, QPainter, QPen, QPixmap
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle('Pipe Defect Detection')
-        self.setWindowIcon(QIcon(':/app'))
+        self.setWindowIcon(QIcon(':/app_icon'))
         self.setMinimumSize(1280, 720)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
@@ -68,6 +68,7 @@ class MainWindow(QMainWindow):
         self.left_widget_shadow.setColor(QColor(0, 0, 0, 70))
         self.left_widget_shadow.setOffset(10, 0)
         self.left_widget.setGraphicsEffect(self.left_widget_shadow)
+        self.left_widget.setFixedWidth(250)
         self.left_widget.setStyleSheet('''
             QWidget#left_widget{
                 background-color: rgba(131,148,155,0.25);
@@ -137,6 +138,11 @@ class MainWindow(QMainWindow):
         self.top_layout.addWidget(self.top_minimize)
         self.top_layout.addWidget(self.top_maximize)
         self.top_layout.addWidget(self.top_close)
+
+        self.app = QLabel()
+        self.app.setPixmap(QPixmap(':/app'))
+        self.app.setContentsMargins(0, 20, 0, 0)
+        self.left_layout.addWidget(self.app, 1, 0, 1, 1, QtCore.Qt.AlignTop)
 
     @staticmethod
     def top_close_clicked(self):
