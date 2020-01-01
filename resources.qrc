@@ -3,13 +3,17 @@
  
 <file alias="app">resources/app.png</file>
 <file alias="app_icon">resources/app_icon.png</file>
+<file alias="background">resources/background.jpg</file>
 <file alias="close">resources/close.png</file>
 <file alias="close_hover">resources/close_hover.png</file>
 <file alias="maximize">resources/maximize.png</file>
 <file alias="maximize_hover">resources/maximize_hover.png</file>
 <file alias="minimize">resources/minimize.png</file>
 <file alias="minimize_hover">resources/minimize_hover.png</file>
-<file alias="background">resources/background.jpg</file>
+<file alias="settings">resources/settings.png</file>
+<file alias="settings_hover">resources/settings_hover.png</file>
+<file alias="skin">resources/skin.png</file>
+<file alias="skin_hover">resources/skin_hover.png</file>
  
 </qresource>
 </RCC>

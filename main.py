@@ -1,12 +1,14 @@
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel
 from PyQt5.QtCore import pyqtSignal, QPoint
-from PyQt5.QtGui import QIcon, QColor, QCursor, QEnterEvent, QPainter, QPen, QPixmap
+from PyQt5.QtGui import QIcon, QColor, QCursor, QEnterEvent, QPainter, QPen, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
+import settings
 from resources import *
 import time
 import sys
+import os
 
 
 class MainWindow(QMainWindow):
@@ -16,6 +18,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Pipe Defect Detection')
         self.setWindowIcon(QIcon(':/app_icon'))
         self.setMinimumSize(1280, 720)
+        self.settings = settings.Settings()
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -40,7 +43,11 @@ class MainWindow(QMainWindow):
 
         self.main_widget = QtWidgets.QWidget()  # main window.
         background = QtGui.QPalette()
-        background.setBrush(self.main_widget.backgroundRole(), QtGui.QBrush(QtGui.QPixmap(':/background')))
+        if os.path.exists(self.settings.background_image) and str(
+                os.path.splitext(self.settings.background_image)[1]).lower() in ['.jpg', '.png']:
+            background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(self.settings.background_image)))
+        else:
+            background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(':/background')))
         self.main_widget.setAutoFillBackground(True)
         self.main_widget.setPalette(background)
         self.main_layout = QtWidgets.QGridLayout()  # create main window layout.
@@ -130,11 +137,29 @@ class MainWindow(QMainWindow):
             }
         ''')
         self.top_minimize.clicked.connect(self.showMinimized)
+        self.top_settings = QtWidgets.QPushButton()
+        self.top_settings.setFixedSize(25, 25)
+        self.top_settings.setToolTip('设置')
+        self.top_settings.setCursor(QCursor(QtCore.Qt.PointingHandCursor))  # set cursor when hover.
+        self.top_settings.setStyleSheet('''
+                    QPushButton{
+                        background-color:transparent;
+                        border-radius:5px;
+                        color:white;
+                        background-image:url(:/skin);
+                    }
+                    QPushButton:hover{
+                        background-image:url(:/skin_hover);
+                        background-repeat:no-repeat center
+                    }
+                ''')
+        self.top_settings.clicked.connect(self.change_settings)
 
         self.main_layout.addWidget(self.top_widget, 1, 0, 1, 15)  # start from (x1,y1) and occupy (x2,y2)
         self.main_layout.addWidget(self.left_widget, 1, 0, 11, 2)
         self.setCentralWidget(self.main_widget)  # set main window's main widget.
 
+        self.top_layout.addWidget(self.top_settings)
         self.top_layout.addWidget(self.top_minimize)
         self.top_layout.addWidget(self.top_maximize)
         self.top_layout.addWidget(self.top_close)
@@ -209,7 +234,7 @@ class MainWindow(QMainWindow):
         if event.button() == QtCore.Qt.LeftButton and now_mouse_y < top_widget_height:
             if self.isMaximized():
                 self.showNormal()
-                print(event.globalPos().x(), "---", self.move_position.x())
+                # print(event.globalPos().x(), "---", self.move_position.x())
                 x1 = event.globalPos().x()
                 x2 = self.move_position.x()
                 if x1 < x2:
@@ -330,6 +355,14 @@ class MainWindow(QMainWindow):
             else:
                 return
         self.setGeometry(x, y, w, h)
+
+    def change_settings(self):
+        flag = self.settings.change_background()
+        if not flag:
+            return
+        background = QtGui.QPalette()
+        background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(self.settings.background_image)))
+        self.main_widget.setPalette(background)
 
 
 def main():
