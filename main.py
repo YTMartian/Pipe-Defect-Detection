@@ -1,8 +1,6 @@
-from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel
-from PyQt5.QtCore import pyqtSignal, QPoint
-from PyQt5.QtGui import QIcon, QColor, QCursor, QEnterEvent, QPainter, QPen, QPixmap, QBrush
+from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton
+from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
-from PyQt5 import QtCore
 from PyQt5 import QtGui
 import settings
 from resources import *
@@ -82,7 +80,7 @@ class MainWindow(QMainWindow):
             }
         ''')
 
-        self.top_close = QtWidgets.QPushButton()  # close window button.
+        self.top_close = QPushButton()  # close window button.
         self.top_close.setFixedSize(25, 25)
         # self.top_close.setIcon(QIcon(":/close"))
         self.top_close.setToolTip('关闭')
@@ -101,7 +99,7 @@ class MainWindow(QMainWindow):
             }
         ''')
         self.top_close.clicked.connect(self.top_close_clicked)
-        self.top_maximize = QtWidgets.QPushButton()  # enlarge window button.
+        self.top_maximize = QPushButton()  # enlarge window button.
         # self.top_maximize.setIcon(QIcon(":/maximize"))
         self.top_maximize.setFixedSize(25, 25)
         self.top_maximize.setToolTip('最大化')
@@ -119,7 +117,7 @@ class MainWindow(QMainWindow):
             }
         ''')
         self.top_maximize.clicked.connect(self.top_maximize_clicked)
-        self.top_minimize = QtWidgets.QPushButton()  # minimize window button.
+        self.top_minimize = QPushButton()  # minimize window button.
         self.top_minimize.setFixedSize(25, 25)
         # self.top_minimize.setIcon(QIcon(":/minimize"))
         self.top_minimize.setToolTip('最小化')
@@ -137,7 +135,7 @@ class MainWindow(QMainWindow):
             }
         ''')
         self.top_minimize.clicked.connect(self.showMinimized)
-        self.top_settings = QtWidgets.QPushButton()
+        self.top_settings = QPushButton()
         self.top_settings.setFixedSize(25, 25)
         self.top_settings.setToolTip('设置')
         self.top_settings.setCursor(QCursor(QtCore.Qt.PointingHandCursor))  # set cursor when hover.
@@ -168,10 +166,22 @@ class MainWindow(QMainWindow):
         self.app.setPixmap(QPixmap(':/app'))
         self.app.setContentsMargins(0, 20, 0, 0)
         self.left_layout.addWidget(self.app, 1, 0, 10, 10, QtCore.Qt.AlignTop)
-        self.test = QLabel()
-        self.test.setText('工程列表')
-        self.test.setStyleSheet('''QLabel{}''')
-        self.left_layout.addWidget(self.test, 2, 5, 1, 1, QtCore.Qt.AlignCenter)
+        self.managements = [QPushButton() for i in range(3)]
+        self.managements[0].setText('工程管理')
+        self.managements[1].setText('视频管理')
+        self.managements[2].setText('缺陷管理')
+        self.managements[0].setIcon(QIcon(":/app_icon"))  # add icon before text.
+        self.managements[1].setIcon(QIcon(":/app_icon"))
+        self.managements[2].setIcon(QIcon(":/app_icon"))
+        for i in range(3):
+            self.managements[i].setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.set_managements_style()
+        self.managements[0].clicked.connect(self.project_management)
+        self.managements[1].clicked.connect(self.video_management)
+        self.managements[2].clicked.connect(self.defect_management)
+        self.left_layout.addWidget(self.managements[0], 3, 5, 1, 1, QtCore.Qt.AlignCenter)
+        self.left_layout.addWidget(self.managements[1], 4, 5, 1, 1, QtCore.Qt.AlignCenter)
+        self.left_layout.addWidget(self.managements[2], 5, 5, 1, 1, QtCore.Qt.AlignCenter)
 
     @staticmethod
     def top_close_clicked(self):
@@ -363,6 +373,76 @@ class MainWindow(QMainWindow):
         background = QtGui.QPalette()
         background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(self.settings.background_image)))
         self.main_widget.setPalette(background)
+
+    def set_managements_style(self):
+        for i in range(3):
+            self.managements[i].setStyleSheet('''
+                    QPushButton{
+                        font-weight:bold;
+                        color:#f1f1f1;
+                        font-size:20px;
+                        border-radius:5px;
+                        font-family:"DengXian";
+                        padding:10px 10px 10px 10px;
+                    }
+                    QPushButton:hover{
+                        background-color:rgba(200,200,200,0.2);
+                    }
+                ''')
+
+    def project_management(self):
+        print('工程管理')
+        self.set_managements_style()
+        self.managements[0].setStyleSheet('''
+                    QPushButton{
+                        background:rgba(200,200,200,0.3)
+                        font-weight:bold;
+                        color:#f1f1f1;
+                        font-size:20px;
+                        border-radius:5px;
+                        font-family:"DengXian";
+                        padding:10px 10px 10px 10px;
+                    }
+                    QPushButton:hover{
+                        background-color:rgba(200,200,200,0.2);
+                    }
+                ''')
+
+    def video_management(self):
+        print('视频管理')
+        self.set_managements_style()
+        self.managements[1].setStyleSheet('''
+                    QPushButton{
+                        background:rgba(200,200,200,0.3)
+                        font-weight:bold;
+                        color:#f1f1f1;
+                        font-size:20px;
+                        border-radius:5px;
+                        font-family:"DengXian";
+                        padding:10px 10px 10px 10px;
+                    }
+                    QPushButton:hover{
+                        background-color:rgba(200,200,200,0.2);
+                    }
+               ''')
+
+    def defect_management(self):
+        print('缺陷管理')
+        self.set_managements_style()
+        self.managements[2].setStyleSheet('''
+                        QPushButton{
+                            background:rgba(200,200,200,0.3)
+                            font-weight:bold;
+                            color:#f1f1f1;
+                            font-size:20px;
+                            border-radius:5px;
+                            font-family:"DengXian";
+                            padding:10px 10px 10px 10px;
+                        }
+                        QPushButton:hover{
+                            background-color:rgba(200,200,200,0.2);
+                    }
+                ''')
 
 
 def main():
