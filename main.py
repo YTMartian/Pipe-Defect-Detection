@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
-import settings
 from resources import *
+import settings
 import time
 import sys
 import os
@@ -46,7 +46,7 @@ class MainWindow(QMainWindow):
             background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(self.settings.background_image)))
         else:
             background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(':/background')))
-        self.main_widget.setAutoFillBackground(True)
+        self.main_widget.setAutoFillBackground(True)  # in this way the widget would not be transparent.
         self.main_widget.setPalette(background)
         self.main_layout = QtWidgets.QGridLayout()  # create main window layout.
         self.main_layout.setSpacing(0)
@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         # self.top_widget.installEventFilter(self)  # bind event filter.
 
         self.left_widget = QtWidgets.QWidget()  # create left part.
-        self.left_widget.setObjectName('left_widget')
+        self.left_widget.setObjectName('left_widget')  # object name is the name in qss.
         self.left_layout = QtWidgets.QGridLayout()  # create left part layout.
         self.left_layout.setContentsMargins(10, 10, 10, 10)
         self.left_widget.setLayout(self.left_layout)  # set left part layout.
@@ -153,8 +153,15 @@ class MainWindow(QMainWindow):
                 ''')
         self.top_settings.clicked.connect(self.change_settings)
 
+        self.manage_layout = QtWidgets.QGridLayout()
+        self.manage_layout.setContentsMargins(10, 10, 10, 10)
+        self.manage_widget = QtWidgets.QWidget()  # create manage part.
+        self.manage_widget.setObjectName('manage_widget')
+        self.manage_widget.setLayout(self.manage_layout)
+
         self.main_layout.addWidget(self.top_widget, 1, 0, 1, 15)  # start from (x1,y1) and occupy (x2,y2)
-        self.main_layout.addWidget(self.left_widget, 1, 0, 11, 2)
+        self.main_layout.addWidget(self.left_widget, 1, 0, 12, 2)
+        self.main_layout.addWidget(self.manage_widget, 2, 2, 11, 13)
         self.setCentralWidget(self.main_widget)  # set main window's main widget.
 
         self.top_layout.addWidget(self.top_settings)
@@ -170,18 +177,23 @@ class MainWindow(QMainWindow):
         self.managements[0].setText('工程管理')
         self.managements[1].setText('视频管理')
         self.managements[2].setText('缺陷管理')
-        self.managements[0].setIcon(QIcon(":/app_icon"))  # add icon before text.
-        self.managements[1].setIcon(QIcon(":/app_icon"))
-        self.managements[2].setIcon(QIcon(":/app_icon"))
+        self.managements[0].setIcon(QIcon(":/project_management"))  # add icon before text.
+        self.managements[1].setIcon(QIcon(":/video_management"))
+        self.managements[2].setIcon(QIcon(":/defect_management"))
         for i in range(3):
             self.managements[i].setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.set_managements_style()
-        self.managements[0].clicked.connect(self.project_management)
-        self.managements[1].clicked.connect(self.video_management)
-        self.managements[2].clicked.connect(self.defect_management)
+        # self.project_management()
+        self.managements[0].clicked.connect(self.all_managements)
+        self.managements[1].clicked.connect(self.all_managements)
+        self.managements[2].clicked.connect(self.all_managements)
         self.left_layout.addWidget(self.managements[0], 3, 5, 1, 1, QtCore.Qt.AlignCenter)
         self.left_layout.addWidget(self.managements[1], 4, 5, 1, 1, QtCore.Qt.AlignCenter)
         self.left_layout.addWidget(self.managements[2], 5, 5, 1, 1, QtCore.Qt.AlignCenter)
+        self.management_flag = 0
+        self.project_management_flag = 1
+        self.video_management_flag = 2
+        self.defect_management_flag = 3
 
     @staticmethod
     def top_close_clicked(self):
@@ -244,6 +256,11 @@ class MainWindow(QMainWindow):
         if event.button() == QtCore.Qt.LeftButton and now_mouse_y < top_widget_height:
             if self.isMaximized():
                 self.showNormal()
+                if self.move_position is None:
+                    self.move_position = event.globalPos()
+                    if self.move_position.x() > QApplication.desktop().width() // 2:
+                        self.move_position = QtCore.QPoint(self.move_position.x() - QApplication.desktop().width() // 2,
+                                                           self.move_position.y())
                 # print(event.globalPos().x(), "---", self.move_position.x())
                 x1 = event.globalPos().x()
                 x2 = self.move_position.x()
@@ -390,12 +407,12 @@ class MainWindow(QMainWindow):
                     }
                 ''')
 
-    def project_management(self):
-        print('工程管理')
+    def all_managements(self):
+        sender = self.sender()
         self.set_managements_style()
-        self.managements[0].setStyleSheet('''
+        sender.setStyleSheet('''
                     QPushButton{
-                        background:rgba(200,200,200,0.3)
+                        background-color:rgba(200,200,200,0.3);
                         font-weight:bold;
                         color:#f1f1f1;
                         font-size:20px;
@@ -403,46 +420,29 @@ class MainWindow(QMainWindow):
                         font-family:"DengXian";
                         padding:10px 10px 10px 10px;
                     }
-                    QPushButton:hover{
-                        background-color:rgba(200,200,200,0.2);
-                    }
                 ''')
+        self.hide_all()
+        if sender == self.managements[0]:
+            self.management_flag = self.project_management_flag
+            self.project_management()
+        elif sender == self.managements[1]:
+            self.management_flag = self.video_management_flag
+            self.video_management()
+        else:
+            self.management_flag = self.defect_management_flag
+            self.defect_management()
+
+    def project_management(self):
+        print('工程管理')
 
     def video_management(self):
         print('视频管理')
-        self.set_managements_style()
-        self.managements[1].setStyleSheet('''
-                    QPushButton{
-                        background:rgba(200,200,200,0.3)
-                        font-weight:bold;
-                        color:#f1f1f1;
-                        font-size:20px;
-                        border-radius:5px;
-                        font-family:"DengXian";
-                        padding:10px 10px 10px 10px;
-                    }
-                    QPushButton:hover{
-                        background-color:rgba(200,200,200,0.2);
-                    }
-               ''')
 
     def defect_management(self):
         print('缺陷管理')
-        self.set_managements_style()
-        self.managements[2].setStyleSheet('''
-                        QPushButton{
-                            background:rgba(200,200,200,0.3)
-                            font-weight:bold;
-                            color:#f1f1f1;
-                            font-size:20px;
-                            border-radius:5px;
-                            font-family:"DengXian";
-                            padding:10px 10px 10px 10px;
-                        }
-                        QPushButton:hover{
-                            background-color:rgba(200,200,200,0.2);
-                    }
-                ''')
+
+    def hide_all(self):
+        pass
 
 
 def main():

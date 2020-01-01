@@ -14,6 +14,9 @@
 <file alias="settings_hover">resources/settings_hover.png</file>
 <file alias="skin">resources/skin.png</file>
 <file alias="skin_hover">resources/skin_hover.png</file>
+<file alias="project_management">resources/project_management.png</file>
+<file alias="defect_management">resources/defect_management.png</file>
+<file alias="video_management">resources/video_management.png</file>
  
 </qresource>
 </RCC>
