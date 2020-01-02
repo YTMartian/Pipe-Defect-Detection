@@ -491,7 +491,15 @@ class MainWindow(QMainWindow):
 
     def search(self):
         search_text = self.search_input.text()
-        print('**', search_text, '**')
+        if len(search_text) == 0:
+            QtWidgets.QMessageBox.information(self, '提示', '输入为空')
+            return
+        if self.management_flag == self.project_management_flag:
+            pass
+        elif self.management_flag == self.video_management_flag:
+            pass
+        elif self.management_flag == self.defect_management_flag:
+            pass
 
 
 def main():
