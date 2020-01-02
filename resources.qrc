@@ -17,6 +17,8 @@
 <file alias="project_management">resources/project_management.png</file>
 <file alias="defect_management">resources/defect_management.png</file>
 <file alias="video_management">resources/video_management.png</file>
+<file alias="search">resources/search.png</file>
+<file alias="search_hover">resources/search_hover.png</file>
  
 </qresource>
 </RCC>

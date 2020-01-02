@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication
+from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
+    QListView, QHBoxLayout
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -140,17 +141,17 @@ class MainWindow(QMainWindow):
         self.top_settings.setToolTip('设置')
         self.top_settings.setCursor(QCursor(QtCore.Qt.PointingHandCursor))  # set cursor when hover.
         self.top_settings.setStyleSheet('''
-                    QPushButton{
-                        background-color:transparent;
-                        border-radius:5px;
-                        color:white;
-                        background-image:url(:/skin);
-                    }
-                    QPushButton:hover{
-                        background-image:url(:/skin_hover);
-                        background-repeat:no-repeat center
-                    }
-                ''')
+            QPushButton{
+                background-color:transparent;
+                border-radius:5px;
+                color:white;
+                background-image:url(:/skin);
+            }
+            QPushButton:hover{
+                background-image:url(:/skin_hover);
+                background-repeat:no-repeat center
+            }
+        ''')
         self.top_settings.clicked.connect(self.change_settings)
 
         self.manage_layout = QtWidgets.QGridLayout()
@@ -183,7 +184,6 @@ class MainWindow(QMainWindow):
         for i in range(3):
             self.managements[i].setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.set_managements_style()
-        # self.project_management()
         self.managements[0].clicked.connect(self.all_managements)
         self.managements[1].clicked.connect(self.all_managements)
         self.managements[2].clicked.connect(self.all_managements)
@@ -194,6 +194,48 @@ class MainWindow(QMainWindow):
         self.project_management_flag = 1
         self.video_management_flag = 2
         self.defect_management_flag = 3
+
+        self.search_input = QLineEdit()
+        self.search_input.setToolTip('输入关键字搜索')
+        self.search_input.setMaximumWidth(300)
+        self.search_input.setMaximumHeight(35)
+        self.search_input.setStyleSheet('''
+            QLineEdit{
+                color:rgba(255,255,255,0.9);
+                font-weight:bold;
+                background-color:rgba(220,220,220,0.3);
+                selection-color:#232323;
+                selection-background-color:#F79F1E;
+                border-radius:10px;
+                font-family:"DengXian";
+                font-size:20px;
+            }
+        ''')
+        self.search_input.setPlaceholderText('搜索关键字...')
+        self.search_button = QPushButton()
+        self.search_button.setFixedSize(30, 30)
+        self.search_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.search_button.setStyleSheet('''
+            QPushButton{
+                border-radius:5px;
+                background-image:url(:/search);
+            }
+            QPushButton:hover{
+                background-image:url(:/search_hover);
+                background-repeat:no-repeat center
+            }
+        ''')
+        # first add the two widget into a QHBoxLayout and then add the layout to another layout.
+        self.search_field = QHBoxLayout()
+        self.search_field.addWidget(self.search_input)
+        self.search_field.addWidget(self.search_button)
+        self.search_field.addStretch()
+        self.search_field.setAlignment(QtCore.Qt.AlignTop)
+        self.search_field_widget = QtWidgets.QWidget()
+        self.search_field_widget.setLayout(self.search_field)
+        self.manage_layout.addWidget(self.search_field_widget, 0, 0, 1, 1)
+        self.search_button.clicked.connect(self.search)
+        self.search_input.returnPressed.connect(self.search)  # press Enter.
 
     @staticmethod
     def top_close_clicked(self):
@@ -394,33 +436,33 @@ class MainWindow(QMainWindow):
     def set_managements_style(self):
         for i in range(3):
             self.managements[i].setStyleSheet('''
-                    QPushButton{
-                        font-weight:bold;
-                        color:#f1f1f1;
-                        font-size:20px;
-                        border-radius:5px;
-                        font-family:"DengXian";
-                        padding:10px 10px 10px 10px;
-                    }
-                    QPushButton:hover{
-                        background-color:rgba(200,200,200,0.2);
-                    }
-                ''')
+                QPushButton{
+                    font-weight:bold;
+                    color:#f1f1f1;
+                    font-size:20px;
+                    border-radius:5px;
+                    font-family:"DengXian";
+                    padding:10px 10px 10px 10px;
+                }
+                QPushButton:hover{
+                    background-color:rgba(200,200,200,0.2);
+                }
+            ''')
 
     def all_managements(self):
         sender = self.sender()
         self.set_managements_style()
         sender.setStyleSheet('''
-                    QPushButton{
-                        background-color:rgba(200,200,200,0.3);
-                        font-weight:bold;
-                        color:#f1f1f1;
-                        font-size:20px;
-                        border-radius:5px;
-                        font-family:"DengXian";
-                        padding:10px 10px 10px 10px;
-                    }
-                ''')
+            QPushButton{
+                background-color:rgba(200,200,200,0.3);
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:20px;
+                border-radius:5px;
+                font-family:"DengXian";
+                padding:10px 10px 10px 10px;
+            }
+        ''')
         self.hide_all()
         if sender == self.managements[0]:
             self.management_flag = self.project_management_flag
@@ -433,16 +475,23 @@ class MainWindow(QMainWindow):
             self.defect_management()
 
     def project_management(self):
-        print('工程管理')
+        self.hide_all()
+        self.search_input.setPlaceholderText('搜索工程...')
 
     def video_management(self):
-        print('视频管理')
+        self.hide_all()
+        self.search_input.setPlaceholderText('搜索视频...')
 
     def defect_management(self):
-        print('缺陷管理')
+        self.hide_all()
+        self.search_input.setPlaceholderText('搜索缺陷...')
 
     def hide_all(self):
         pass
+
+    def search(self):
+        search_text = self.search_input.text()
+        print('**', search_text, '**')
 
 
 def main():
