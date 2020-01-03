@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
-    QListView, QHBoxLayout
+    QListView, QHBoxLayout, QRadioButton, QTableWidget
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -233,9 +233,55 @@ class MainWindow(QMainWindow):
         self.search_field.setAlignment(QtCore.Qt.AlignTop)
         self.search_field_widget = QtWidgets.QWidget()
         self.search_field_widget.setLayout(self.search_field)
-        self.manage_layout.addWidget(self.search_field_widget, 0, 0, 1, 1)
+        self.manage_layout.addWidget(self.search_field_widget, 0, 5, 1, 1)
         self.search_button.clicked.connect(self.search)
         self.search_input.returnPressed.connect(self.search)  # press Enter.
+
+        # toggle project detailed view and statistic view.
+        self.is_project_detailed_view = True
+        self.toggle_project_field = QHBoxLayout()
+        self.toggle_project_field.addStretch()
+        self.toggle_project_field.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+        self.toggle_project_widget = QtWidgets.QWidget()
+        self.toggle_project_widget.setLayout(self.toggle_project_field)
+        self.toggle_project_detailed_view = QRadioButton('工程详细')
+        self.toggle_project_detailed_view.setChecked(True)
+        self.toggle_project_detailed_view.toggled.connect(self.toggle_project_view)
+        self.toggle_project_statistic_view = QRadioButton('工程统计')
+        self.toggle_project_statistic_view.setChecked(False)
+        self.toggle_project_statistic_view.toggled.connect(self.toggle_project_view)
+        self.toggle_project_field.addWidget(self.toggle_project_detailed_view)
+        self.toggle_project_field.addWidget(self.toggle_project_statistic_view)
+        self.manage_layout.addWidget(self.toggle_project_widget, 5, 5, 10, 1)
+        self.toggle_project_widget.setStyleSheet('''
+            QWidget{
+                font-family:"DengXian";
+                font-size:18px;
+                font-weight:bold;
+                color:#f1f1f1;
+        }''')
+
+        # show table.
+        self.show_table = QTableWidget()
+        self.show_table.setRowCount(5)
+        self.show_table.setColumnCount(16)
+        self.show_table.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.show_table.horizontalHeader().setVisible(False)  # hide teh header.
+        self.show_table.verticalHeader().setVisible(False)
+        self.show_table.setShowGrid(False)
+        self.manage_layout.addWidget(self.show_table, 6, 2, 10, 10)
+        self.show_table.setStyleSheet('''
+            QWidget{
+                background:transparent;
+                font-family:"DengXian";
+                font-size:14px;
+                font-weight:bold;
+                color:#f1f1f1;
+                selection-background-color:rgba(220,220,220,0.2);
+                border:none;
+        }''')
+
+        self.hide_all()
 
     @staticmethod
     def top_close_clicked(self):
@@ -477,6 +523,12 @@ class MainWindow(QMainWindow):
     def project_management(self):
         self.hide_all()
         self.search_input.setPlaceholderText('搜索工程...')
+        self.toggle_project_statistic_view.setVisible(True)
+        self.toggle_project_detailed_view.setVisible(True)
+        if self.is_project_detailed_view:
+            pass
+        else:
+            pass
 
     def video_management(self):
         self.hide_all()
@@ -487,19 +539,29 @@ class MainWindow(QMainWindow):
         self.search_input.setPlaceholderText('搜索缺陷...')
 
     def hide_all(self):
-        pass
+        self.toggle_project_statistic_view.setVisible(False)
+        self.toggle_project_detailed_view.setVisible(False)
 
     def search(self):
         search_text = self.search_input.text()
         if len(search_text) == 0:
             QtWidgets.QMessageBox.information(self, '提示', '输入为空')
             return
-        if self.management_flag == self.project_management_flag:
+        if self.management_flag == self.project_management_flag:  # search in project.
             pass
-        elif self.management_flag == self.video_management_flag:
+        elif self.management_flag == self.video_management_flag:  # search in video.
             pass
-        elif self.management_flag == self.defect_management_flag:
+        elif self.management_flag == self.defect_management_flag:  # search in defect.
             pass
+        else:  # search in all.
+            pass
+
+    def toggle_project_view(self):
+        sender = self.sender()
+        if sender == self.toggle_project_detailed_view:
+            print('工程详细')
+        else:
+            print('工程统计')
 
 
 def main():
