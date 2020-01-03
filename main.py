@@ -4,6 +4,7 @@ from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from resources import *
+from database import *
 import settings
 import time
 import sys
@@ -18,6 +19,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(':/app_icon'))
         self.setMinimumSize(1280, 720)
         self.settings = settings.Settings()
+        self.db = Database()
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -611,9 +613,7 @@ class MainWindow(QMainWindow):
                 '工程\n编号', '工程\n名称', '工程\n地址', '负责\n人员', '开工\n日期', '报告\n编号', '委托\n单位', '建设\n单位', '设计\n单位',
                 '施工\n单位', '监理\n单位', '检测\n类型', '移动\n方式', '封堵\n方式', '排水\n方式', '清疏\n方式'))
             self.resize_table_size_to_contents()
-            data = [
-                ['123', '测试', '天津', 'YTMartian', '2020-01-03', '20190103', '', '', '', '', '', '常规见证检验', '人工牵引', '无',
-                 '无', '高压水枪']]
+            data = self.db.get_project_detailed()
             self.insert_data_to_table(data)
         else:
             self.show_table.setColumnCount(10)
@@ -633,7 +633,6 @@ class MainWindow(QMainWindow):
             for column in range(len(data[row])):
                 cell = QTableWidgetItem(data[row][column])
                 self.show_table.setItem(row, column, cell)
-
 
 
 def main():
