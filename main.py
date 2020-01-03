@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
-    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView
+    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -259,6 +259,28 @@ class MainWindow(QMainWindow):
                 font-weight:bold;
                 color:#f1f1f1;
         }''')
+        self.toggle_project_detailed_view.setStyleSheet('''
+            QRadioButton::indicator:checked {
+                background-color: rgba(0,220,0,0.9);
+                border-radius:7px;
+                border:2px solid white;
+            }
+            QRadioButton::indicator:unchecked {
+                background-color: white;
+                border-radius:7px;
+                border:2px solid white;
+        }''')
+        self.toggle_project_statistic_view.setStyleSheet('''
+            QRadioButton::indicator:checked {
+                background-color: rgba(0,220,0,0.9);
+                border-radius:7px;
+                border:2px solid white;
+            }
+            QRadioButton::indicator:unchecked {
+                background-color: white;
+                border-radius:7px;
+                border:2px solid white;
+        }''')
 
         # show table.
         # settings in:https://blog.csdn.net/yekui006/article/details/98211808
@@ -275,22 +297,30 @@ class MainWindow(QMainWindow):
             QWidget{
                 background:transparent;
                 font-family:"DengXian";
-                font-size:14px;
+                font-size:18px;
                 font-weight:bold;
                 color:#f1f1f1;
                 selection-background-color:rgba(220,220,220,0.2);
                 border:none;
         }''')
-        self.show_table.horizontalHeader().setStyleSheet('''''')
+        # change header style:should add ::section.
+        self.show_table.horizontalHeader().setStyleSheet('''
+            QTableView QHeaderView::section{	
+                background-color:transparent;
+                font-size:14px;
+                font-weight:bold;
+                color:rgba(200,200,200,0.9);
+}       ''')
         # set the column width auto to fix window width.
         # https://blog.csdn.net/yl_best/article/details/84070231
         self.show_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive | QHeaderView.Stretch)
-        self.show_table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignCenter)
+        self.show_table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignLeft)
+        self.show_table.horizontalHeader().setStretchLastSection(True)
 
         self.hide_all()
 
     @staticmethod
-    def top_close_clicked(self):
+    def top_close_clicked():
         time.sleep(0.1)  # so...
         exit()
 
@@ -532,31 +562,27 @@ class MainWindow(QMainWindow):
         self.toggle_project_statistic_view.setVisible(True)
         self.toggle_project_detailed_view.setVisible(True)
         self.show_table.setVisible(True)
-        if self.toggle_project_detailed_view.isChecked():
-            self.show_table.setColumnCount(16)
-            self.show_table.setHorizontalHeaderLabels((
-                '工程\n编号', '工程\n名称', '工程\n地址', '负责\n人员', '开工\n日期', '报告\n编号', '委托\n单位', '建设\n单位', '设计\n单位',
-                '施工\n单位', '监理\n单位', '检测\n类型', '移动\n方式', '封堵\n方式', '排水\n方式', '清疏\n方式'))
-        else:
-            self.show_table.setColumnCount(10)
-            self.show_table.setHorizontalHeaderLabels(
-                ('工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '视频总数', '管道总数', '里程(KM)', '标内判读', '判读总数'))
+        self.toggle_project_view()
 
     def video_management(self):
         self.hide_all()
         self.search_input.setPlaceholderText('搜索视频...')
         self.show_table.setVisible(True)
         self.show_table.setColumnCount(8)
+        self.show_table.setRowCount(0)
         self.show_table.setHorizontalHeaderLabels(
             ('道路名称', '管道编号', '管道类型', '管道材质', '视频文件', '视频日期', '导入日期', '判读数量'))
+        self.resize_table_size_to_contents()
 
     def defect_management(self):
         self.hide_all()
         self.search_input.setPlaceholderText('搜索缺陷...')
         self.show_table.setVisible(True)
         self.show_table.setColumnCount(11)
+        self.show_table.setRowCount(0)
         self.show_table.setHorizontalHeaderLabels(
             ('道路名称', '管道编号', '管道类型', '管道材质', '管径(mm)', '缺陷名称', '等级', '缺陷性质', '缺陷位置', '检测日期', '判读日期'))
+        self.resize_table_size_to_contents()
 
     def hide_all(self):
         self.toggle_project_statistic_view.setVisible(False)
@@ -578,16 +604,36 @@ class MainWindow(QMainWindow):
             pass
 
     def toggle_project_view(self):
-        sender = self.sender()
-        if sender == self.toggle_project_detailed_view:
+        if self.toggle_project_detailed_view.isChecked():
             self.show_table.setColumnCount(16)
+            self.show_table.setRowCount(0)
             self.show_table.setHorizontalHeaderLabels((
                 '工程\n编号', '工程\n名称', '工程\n地址', '负责\n人员', '开工\n日期', '报告\n编号', '委托\n单位', '建设\n单位', '设计\n单位',
                 '施工\n单位', '监理\n单位', '检测\n类型', '移动\n方式', '封堵\n方式', '排水\n方式', '清疏\n方式'))
+            self.resize_table_size_to_contents()
+            data = [
+                ['123', '测试', '天津', 'YTMartian', '2020-01-03', '20190103', '', '', '', '', '', '常规见证检验', '人工牵引', '无',
+                 '无', '高压水枪']]
+            self.insert_data_to_table(data)
         else:
             self.show_table.setColumnCount(10)
+            self.show_table.setRowCount(0)
             self.show_table.setHorizontalHeaderLabels(
                 ('工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '视频总数', '管道总数', '里程(KM)', '标内判读', '判读总数'))
+            self.resize_table_size_to_contents()
+
+    def resize_table_size_to_contents(self):
+        length = self.show_table.columnCount()
+        for i in range(length):
+            self.show_table.horizontalHeader().resizeSection(i, QHeaderView.ResizeToContents)
+
+    def insert_data_to_table(self, data):
+        self.show_table.setRowCount(len(data))
+        for row in range(len(data)):
+            for column in range(len(data[row])):
+                cell = QTableWidgetItem(data[row][column])
+                self.show_table.setItem(row, column, cell)
+
 
 
 def main():
