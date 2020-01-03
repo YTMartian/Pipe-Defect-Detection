@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
-    QListView, QHBoxLayout, QRadioButton, QTableWidget
+    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -238,7 +238,6 @@ class MainWindow(QMainWindow):
         self.search_input.returnPressed.connect(self.search)  # press Enter.
 
         # toggle project detailed view and statistic view.
-        self.is_project_detailed_view = True
         self.toggle_project_field = QHBoxLayout()
         self.toggle_project_field.addStretch()
         self.toggle_project_field.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
@@ -262,12 +261,14 @@ class MainWindow(QMainWindow):
         }''')
 
         # show table.
+        # settings in:https://blog.csdn.net/yekui006/article/details/98211808
+        # very useful functions:https://likegeeks.com/pyqt5-tutorial/#Make-QTableWidget-not-editable-read-only
         self.show_table = QTableWidget()
-        self.show_table.setRowCount(5)
-        self.show_table.setColumnCount(16)
+
         self.show_table.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.show_table.horizontalHeader().setVisible(False)  # hide teh header.
-        self.show_table.verticalHeader().setVisible(False)
+        # self.show_table.horizontalHeader().setVisible(False)
+        self.show_table.verticalHeader().setVisible(False)  # hide teh header.
+        self.show_table.horizontalHeader().setStretchLastSection(True)
         self.show_table.setShowGrid(False)
         self.manage_layout.addWidget(self.show_table, 6, 2, 10, 10)
         self.show_table.setStyleSheet('''
@@ -280,6 +281,11 @@ class MainWindow(QMainWindow):
                 selection-background-color:rgba(220,220,220,0.2);
                 border:none;
         }''')
+        self.show_table.horizontalHeader().setStyleSheet('''''')
+        # set the column width auto to fix window width.
+        # https://blog.csdn.net/yl_best/article/details/84070231
+        self.show_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive | QHeaderView.Stretch)
+        self.show_table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignCenter)
 
         self.hide_all()
 
@@ -525,22 +531,37 @@ class MainWindow(QMainWindow):
         self.search_input.setPlaceholderText('搜索工程...')
         self.toggle_project_statistic_view.setVisible(True)
         self.toggle_project_detailed_view.setVisible(True)
-        if self.is_project_detailed_view:
-            pass
+        self.show_table.setVisible(True)
+        if self.toggle_project_detailed_view.isChecked():
+            self.show_table.setColumnCount(16)
+            self.show_table.setHorizontalHeaderLabels((
+                '工程\n编号', '工程\n名称', '工程\n地址', '负责\n人员', '开工\n日期', '报告\n编号', '委托\n单位', '建设\n单位', '设计\n单位',
+                '施工\n单位', '监理\n单位', '检测\n类型', '移动\n方式', '封堵\n方式', '排水\n方式', '清疏\n方式'))
         else:
-            pass
+            self.show_table.setColumnCount(10)
+            self.show_table.setHorizontalHeaderLabels(
+                ('工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '视频总数', '管道总数', '里程(KM)', '标内判读', '判读总数'))
 
     def video_management(self):
         self.hide_all()
         self.search_input.setPlaceholderText('搜索视频...')
+        self.show_table.setVisible(True)
+        self.show_table.setColumnCount(8)
+        self.show_table.setHorizontalHeaderLabels(
+            ('道路名称', '管道编号', '管道类型', '管道材质', '视频文件', '视频日期', '导入日期', '判读数量'))
 
     def defect_management(self):
         self.hide_all()
         self.search_input.setPlaceholderText('搜索缺陷...')
+        self.show_table.setVisible(True)
+        self.show_table.setColumnCount(11)
+        self.show_table.setHorizontalHeaderLabels(
+            ('道路名称', '管道编号', '管道类型', '管道材质', '管径(mm)', '缺陷名称', '等级', '缺陷性质', '缺陷位置', '检测日期', '判读日期'))
 
     def hide_all(self):
         self.toggle_project_statistic_view.setVisible(False)
         self.toggle_project_detailed_view.setVisible(False)
+        self.show_table.setVisible(False)
 
     def search(self):
         search_text = self.search_input.text()
@@ -559,9 +580,14 @@ class MainWindow(QMainWindow):
     def toggle_project_view(self):
         sender = self.sender()
         if sender == self.toggle_project_detailed_view:
-            print('工程详细')
+            self.show_table.setColumnCount(16)
+            self.show_table.setHorizontalHeaderLabels((
+                '工程\n编号', '工程\n名称', '工程\n地址', '负责\n人员', '开工\n日期', '报告\n编号', '委托\n单位', '建设\n单位', '设计\n单位',
+                '施工\n单位', '监理\n单位', '检测\n类型', '移动\n方式', '封堵\n方式', '排水\n方式', '清疏\n方式'))
         else:
-            print('工程统计')
+            self.show_table.setColumnCount(10)
+            self.show_table.setHorizontalHeaderLabels(
+                ('工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '视频总数', '管道总数', '里程(KM)', '标内判读', '判读总数'))
 
 
 def main():
