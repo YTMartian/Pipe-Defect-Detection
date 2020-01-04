@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
-    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView
+    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -650,6 +650,54 @@ class MainWindow(QMainWindow):
                 # fantastic.
                 cell.setToolTip(str(self.data[row][column]))
                 self.show_table.setItem(row, column - 1, cell)
+
+    # right click menu.
+    def contextMenuEvent(self, event):
+        context_menu = QMenu(self)
+        context_menu.setStyleSheet('''
+            QMenu{
+                background:rgba(20,20,20,0.8);
+                font-weight:bold;
+                font-size:17px;
+                padding-top:10px;
+                border-radius:30px;
+                font-family:"Microsoft YaHei";
+            }
+            
+        ''')
+        if self.management_flag == self.project_management_flag:
+            video_management = context_menu.addAction("视频管理")
+            add_project = context_menu.addAction("添加工程")
+            edit_project = context_menu.addAction("编辑工程")
+            generate_document = context_menu.addAction("生成报告")
+            action = context_menu.exec_(self.mapToGlobal(event.pos()))
+            if action == video_management:
+                print('视频管理')
+            elif action == add_project:
+                print('添加工程')
+            elif action == edit_project:
+                print("编辑工程")
+            elif action == generate_document:
+                print('生成报告')
+        elif self.management_flag == self.video_management_flag:
+            defect_management = context_menu.addAction("缺陷管理")
+            add_video = context_menu.addAction("添加视频")
+            edit_video = context_menu.addAction("编辑视频")
+            add_defect = context_menu.addAction("添加缺陷")
+            action = context_menu.exec_(self.mapToGlobal(event.pos()))
+            if action == defect_management:
+                print("缺陷管理")
+            elif action == add_video:
+                print("添加视频")
+            elif action == edit_video:
+                print("编辑视频")
+            elif action == add_defect:
+                print("添加缺陷")
+        elif self.management_flag == self.defect_management_flag:
+            edit_defect = context_menu.addAction("编辑缺陷")
+            action = context_menu.exec_(self.mapToGlobal(event.pos()))
+            if action == edit_defect:
+                print("编辑缺陷")
 
 
 def main():
