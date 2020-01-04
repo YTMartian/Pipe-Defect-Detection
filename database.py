@@ -40,7 +40,6 @@ class Database:
         return data[0][0]
 
     def get_project_detailed(self):
-
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM project")
         self.conn.commit()
@@ -48,7 +47,7 @@ class Database:
         cursor.close()
         res = []
         for i in data:
-            temp = [str(i[j]) for j in range(0, 12)]  # the first item is id, we need to record it.
+            temp = [str(i[j]) for j in range(0, 12)]  # the first item is project_id, we need to record it.
             detection_id = i[12]
             move_id = i[13]
             plugging_id = i[14]
@@ -72,7 +71,7 @@ class Database:
         cursor.close()
         res = []
         for i in data:
-            temp = [str(i[j]) for j in range(0, 6)]
+            temp = [str(i[j]) for j in range(0, 6)]# the first item is project_id, we need to record it.
             staff_id = temp[4]
             project_id = str(i[0])
             temp[4] = self.get_name('staff', staff_id)
@@ -97,9 +96,14 @@ class Database:
             res.append(temp.copy())
         return res
 
-    def get_video(self):
+    def get_video(self, project_id):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM video")
+        if project_id is None:
+            cursor.execute("SELECT * FROM video")
+        else:
+            cursor.execute(
+                "SELECT * FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
+                    project_id))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
@@ -122,9 +126,12 @@ class Database:
             res.append(temp.copy())
         return res
 
-    def get_defect(self):
+    def get_defect(self, video_id):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM defect")
+        if video_id is None:
+            cursor.execute("SELECT * FROM defect")
+        else:
+            cursor.execute("SELECT * FROM defect WHERE video_id = {}".format(video_id))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()

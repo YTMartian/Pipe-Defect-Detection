@@ -325,6 +325,7 @@ class MainWindow(QMainWindow):
         # if choose one grid. then choose the whole row.
         self.show_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.show_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # set can't edit.
+        self.show_table.setSelectionMode(QAbstractItemView.SingleSelection)  # can only select one line.
 
         self.hide_all()
 
@@ -554,16 +555,15 @@ class MainWindow(QMainWindow):
                 padding:10px 10px 10px 10px;
             }
         ''')
-        self.hide_all()
         if sender == self.managements[0]:
             self.management_flag = self.project_management_flag
             self.project_management()
         elif sender == self.managements[1]:
             self.management_flag = self.video_management_flag
-            self.video_management()
+            self.video_management(None)
         else:
             self.management_flag = self.defect_management_flag
-            self.defect_management()
+            self.defect_management(None)
 
     def project_management(self):
         self.hide_all()
@@ -573,7 +573,7 @@ class MainWindow(QMainWindow):
         self.show_table.setVisible(True)
         self.toggle_project_view()
 
-    def video_management(self):
+    def video_management(self, project_id):
         self.hide_all()
         self.search_input.setPlaceholderText('搜索视频...')
         self.show_table.setVisible(True)
@@ -582,10 +582,10 @@ class MainWindow(QMainWindow):
         self.show_table.setHorizontalHeaderLabels(
             ('道路名称', '管道编号', '管道类型', '管道材质', '视频文件', '视频日期', '导入日期', '判读数量'))
         self.resize_table_size_to_contents()
-        self.data = self.db.get_video()
+        self.data = self.db.get_video(project_id)
         self.insert_data_to_table()
 
-    def defect_management(self):
+    def defect_management(self, video_id):
         self.hide_all()
         self.search_input.setPlaceholderText('搜索缺陷...')
         self.show_table.setVisible(True)
@@ -594,7 +594,7 @@ class MainWindow(QMainWindow):
         self.show_table.setHorizontalHeaderLabels(
             ('道路名称', '管道编号', '管道类型', '管道材质', '管径(mm)', '缺陷名称', '等级', '缺陷性质', '缺陷位置/帧', '检测日期', '判读日期'))
         self.resize_table_size_to_contents()
-        self.data = self.db.get_defect()
+        self.data = self.db.get_defect(video_id)
         self.insert_data_to_table()
 
     def hide_all(self):
@@ -653,6 +653,10 @@ class MainWindow(QMainWindow):
 
     # right click menu.
     def contextMenuEvent(self, event):
+        # get current selected row number.
+        current_row_number = self.show_table.currentRow()
+        if current_row_number == -1:  # didn't select any row.
+            return
         context_menu = QMenu(self)
         context_menu.setStyleSheet('''
             QMenu{
@@ -663,7 +667,6 @@ class MainWindow(QMainWindow):
                 border-radius:30px;
                 font-family:"Microsoft YaHei";
             }
-            
         ''')
         if self.management_flag == self.project_management_flag:
             video_management = context_menu.addAction("视频管理")
@@ -672,7 +675,10 @@ class MainWindow(QMainWindow):
             generate_document = context_menu.addAction("生成报告")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == video_management:
-                print('视频管理')
+                self.management_flag = self.video_management_flag
+                self.set_managements_style()
+                self.set_single_management_style(1)
+                self.video_management(self.data[current_row_number][0])  # get current project_id's videos.
             elif action == add_project:
                 print('添加工程')
             elif action == edit_project:
@@ -686,7 +692,10 @@ class MainWindow(QMainWindow):
             add_defect = context_menu.addAction("添加缺陷")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == defect_management:
-                print("缺陷管理")
+                self.management_flag = self.defect_management_flag
+                self.set_managements_style()
+                self.set_single_management_style(2)
+                self.defect_management(self.data[current_row_number][0])
             elif action == add_video:
                 print("添加视频")
             elif action == edit_video:
@@ -698,6 +707,19 @@ class MainWindow(QMainWindow):
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == edit_defect:
                 print("编辑缺陷")
+
+    def set_single_management_style(self, index):
+        self.managements[index].setStyleSheet('''
+            QPushButton{
+                background-color:rgba(200,200,200,0.3);
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:20px;
+                border-radius:5px;
+                font-family:"DengXian";
+                padding:10px 10px 10px 10px;
+            }
+        ''')
 
 
 def main():
