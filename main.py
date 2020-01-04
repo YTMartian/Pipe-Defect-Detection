@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
-    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem
+    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -20,6 +20,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1280, 720)
         self.settings = settings.Settings()
         self.db = Database()
+        self.data = []
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -318,6 +319,12 @@ class MainWindow(QMainWindow):
         self.show_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive | QHeaderView.Stretch)
         self.show_table.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignLeft)
         self.show_table.horizontalHeader().setStretchLastSection(True)
+        self.show_table.verticalHeader().setDefaultSectionSize(60)  # set row margin.
+        self.show_table.resizeRowsToContents()
+        self.show_table.setWordWrap(False)
+        # if choose one grid. then choose the whole row.
+        self.show_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.show_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # set can't edit.
 
         self.hide_all()
 
@@ -575,6 +582,8 @@ class MainWindow(QMainWindow):
         self.show_table.setHorizontalHeaderLabels(
             ('道路名称', '管道编号', '管道类型', '管道材质', '视频文件', '视频日期', '导入日期', '判读数量'))
         self.resize_table_size_to_contents()
+        self.data = self.db.get_video()
+        self.insert_data_to_table()
 
     def defect_management(self):
         self.hide_all()
@@ -583,8 +592,10 @@ class MainWindow(QMainWindow):
         self.show_table.setColumnCount(11)
         self.show_table.setRowCount(0)
         self.show_table.setHorizontalHeaderLabels(
-            ('道路名称', '管道编号', '管道类型', '管道材质', '管径(mm)', '缺陷名称', '等级', '缺陷性质', '缺陷位置', '检测日期', '判读日期'))
+            ('道路名称', '管道编号', '管道类型', '管道材质', '管径(mm)', '缺陷名称', '等级', '缺陷性质', '缺陷位置/帧', '检测日期', '判读日期'))
         self.resize_table_size_to_contents()
+        self.data = self.db.get_defect()
+        self.insert_data_to_table()
 
     def hide_all(self):
         self.toggle_project_statistic_view.setVisible(False)
@@ -613,26 +624,32 @@ class MainWindow(QMainWindow):
                 '工程\n编号', '工程\n名称', '工程\n地址', '负责\n人员', '开工\n日期', '报告\n编号', '委托\n单位', '建设\n单位', '设计\n单位',
                 '施工\n单位', '监理\n单位', '检测\n类型', '移动\n方式', '封堵\n方式', '排水\n方式', '清疏\n方式'))
             self.resize_table_size_to_contents()
-            data = self.db.get_project_detailed()
-            self.insert_data_to_table(data)
+            self.data = self.db.get_project_detailed()
+            self.insert_data_to_table()
         else:
             self.show_table.setColumnCount(10)
             self.show_table.setRowCount(0)
             self.show_table.setHorizontalHeaderLabels(
                 ('工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '视频总数', '管道总数', '里程(KM)', '标内判读', '判读总数'))
             self.resize_table_size_to_contents()
+            self.data = self.db.get_project_statistic()
+            self.insert_data_to_table()
 
     def resize_table_size_to_contents(self):
         length = self.show_table.columnCount()
         for i in range(length):
             self.show_table.horizontalHeader().resizeSection(i, QHeaderView.ResizeToContents)
 
-    def insert_data_to_table(self, data):
-        self.show_table.setRowCount(len(data))
-        for row in range(len(data)):
-            for column in range(len(data[row])):
-                cell = QTableWidgetItem(data[row][column])
-                self.show_table.setItem(row, column, cell)
+    def insert_data_to_table(self):
+        self.show_table.setRowCount(len(self.data))
+        for row in range(len(self.data)):
+            # the first item is id, we will use it to determine which row we choose to find it in database.
+            for column in range(1, len(self.data[row])):
+                cell = QTableWidgetItem(self.data[row][column])
+                # so, in this way, when hover the mouse it will show the whole text.
+                # fantastic.
+                cell.setToolTip(str(self.data[row][column]))
+                self.show_table.setItem(row, column - 1, cell)
 
 
 def main():
