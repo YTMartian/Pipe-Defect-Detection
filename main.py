@@ -7,6 +7,7 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from resources import *
 from database import *
+import datetime
 import settings
 import time
 import sys
@@ -24,6 +25,8 @@ class MainWindow(QMainWindow):
         self.db = Database()
         self.data = []
         self.is_add_project = False
+        self.is_edit_project = False
+        self.edit_project_id = None
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -722,7 +725,9 @@ class MainWindow(QMainWindow):
             if self.toggle_project_detailed_view.isChecked():
                 add_project = context_menu.addAction("添加工程")
                 edit_project = context_menu.addAction("编辑工程")
+            delete_project = context_menu.addAction("删除工程")
             generate_document = context_menu.addAction("生成报告")
+            add_video = context_menu.addAction("添加视频")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == video_management:
                 self.management_flag = self.video_management_flag
@@ -732,31 +737,38 @@ class MainWindow(QMainWindow):
             elif action == add_project:
                 self.add_project()
             elif action == edit_project:
-                print("编辑工程")
+                self.add_project(current_row_number)
+            elif action == delete_project:
+                self.delete_project(self.data[current_row_number][0])
             elif action == generate_document:
                 print('生成报告')
+            elif action == add_video:
+                self.add_video(self.data[current_row_number][0])
         elif self.management_flag == self.video_management_flag:
             defect_management = context_menu.addAction("缺陷管理")
-            add_video = context_menu.addAction("添加视频")
-            edit_video = context_menu.addAction("编辑视频")
             add_defect = context_menu.addAction("添加缺陷")
+            edit_video = context_menu.addAction("编辑视频")
+            delete_video = context_menu.addAction("删除视频")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == defect_management:
                 self.management_flag = self.defect_management_flag
                 self.set_managements_style()
                 self.set_single_management_style(2)
-                self.defect_management(self.data[current_row_number][0])
-            elif action == add_video:
-                print("添加视频")
+                self.defect_management(self.data[current_row_number][0])  # video_id
             elif action == edit_video:
                 print("编辑视频")
+            elif action == delete_video:
+                self.delete_video(self.data[current_row_number][0])
             elif action == add_defect:
                 print("添加缺陷")
         elif self.management_flag == self.defect_management_flag:
             edit_defect = context_menu.addAction("编辑缺陷")
+            delete_defect = context_menu.addAction("删除缺陷")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == edit_defect:
                 print("编辑缺陷")
+            elif action == delete_defect:
+                print("删除缺陷")
 
     def set_single_management_style(self, index):
         self.managements[index].setStyleSheet('''
@@ -771,12 +783,20 @@ class MainWindow(QMainWindow):
             }
         ''')
 
-    def add_project(self):
+    # if current_row_number is None, then it is add project,or it is edit project.
+    def add_project(self, current_row_number=None):
+        row = current_row_number
+        if current_row_number is None:
+            self.is_edit_project = False
+            self.edit_project_id = None
+            self.show_table.setRowCount(self.show_table.rowCount() + 1)  # add new row.
+            row = self.show_table.rowCount() - 1
+        else:
+            self.is_edit_project = True
+            self.edit_project_id = self.data[current_row_number][0]
         self.is_add_project = True
         self.ensure_button.setVisible(True)
         self.cancel_button.setVisible(True)
-        self.show_table.setRowCount(self.show_table.rowCount() + 1)  # add new row.
-        row = self.show_table.rowCount() - 1
         self.show_table.selectRow(row)  # set select row.
         self.add_project_widgets.clear()
         self.add_project_widgets.append(QLineEdit())  # project_no.
@@ -858,9 +878,29 @@ class MainWindow(QMainWindow):
                     width:50px;
                 }
             ''')
+        if self.is_edit_project:
+            data = self.db.get_one_project_detailed(self.edit_project_id)
+            self.add_project_widgets[0].setText(data[1])
+            self.add_project_widgets[1].setText(data[2])
+            self.add_project_widgets[2].setText(data[3])
+            index = 0
+            for i in self.add_project_tables[0]:
+                if i == data[4]:
+                    break
+                index += 1
+            self.add_project_widgets[3].setCurrentIndex(index)
+            self.add_project_widgets[4].setDate(datetime.datetime.strptime(data[5], "%Y-%m-%d"))
+            for i in range(5, 11):
+                self.add_project_widgets[i].setText(data[i + 1])
+            for i in range(11, 15):
+                index = 0
+                for j in self.add_project_tables[i - 10]:
+                    if j == data[i+1]:
+                        break
+                    index += 1
+                self.add_project_widgets[i].setCurrentIndex(index)
 
     def ensure_add_project(self):
-
         data = []
         project_no = self.add_project_widgets[0].text()
         if len(project_no) == 0:
@@ -907,7 +947,7 @@ class MainWindow(QMainWindow):
         self.ensure_button.setVisible(False)
         self.cancel_button.setVisible(False)
         self.is_add_project = False
-        self.db.add_project(data)
+        self.db.add_project(data, self.edit_project_id)
         self.project_management()
 
     def cancel_add_project(self):
@@ -915,6 +955,16 @@ class MainWindow(QMainWindow):
         self.cancel_button.setVisible(False)
         self.show_table.setRowCount(self.show_table.rowCount() - 1)  # delete the last row.
         self.is_add_project = False
+        self.project_management()
+
+    def delete_project(self, project_id):
+        print('删除工程 ', project_id)
+
+    def add_video(self, project_id):
+        print("添加视频", project_id)
+
+    def delete_video(self, video_id):
+        print("删除视频", video_id)
 
 
 def main():

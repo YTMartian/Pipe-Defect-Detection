@@ -63,6 +63,16 @@ class Database:
             res.append(temp.copy())
         return res
 
+    def get_one_project_detailed(self, project_id):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM project WHERE project_id = {}".format(project_id))
+        self.conn.commit()
+        data = cursor.fetchall()
+        cursor.close()
+        res = []
+        res = [str(data[0][i]) for i in range(0, 16)]
+        return res
+
     def get_project_statistic(self):
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM project")
@@ -178,15 +188,31 @@ class Database:
             res.append(temp.copy())
         return res
 
-    def add_project(self, data):
-        sql = "INSERT INTO project(project_no,project_name,project_address,staff_id,start_date,report_no,requester_unit,construction_unit,design_unit,build_unit,supervisory_unit,detection_id,move_id,plugging_id,drainage_id,dredging_id) VALUES('{}','{}','{}',{},'{}','{}','{}','{}','{}','{}','{}',{},{},{},{},{})".format(
-            data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
-            data[11], data[12], data[13], data[14], data[15])
+    # if project_id is None, then it is add project,or it is edit project.
+    def add_project(self, data, project_id):
+        sql = ""
+        if project_id is not None:
+            sql = "UPDATE project SET project_no='{}',project_name='{}',project_address='{}',staff_id={},start_date='{}',report_no='{}',requester_unit='{}',construction_unit='{}',design_unit='{}',build_unit='{}',supervisory_unit='{}',detection_id={},move_id={},plugging_id={},drainage_id={},dredging_id={} WHERE project_id={}".format(
+                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
+                data[11], data[12], data[13], data[14], data[15], project_id)
+        else:
+            sql = "INSERT INTO project(project_no,project_name,project_address,staff_id,start_date,report_no,requester_unit,construction_unit,design_unit,build_unit,supervisory_unit,detection_id,move_id,plugging_id,drainage_id,dredging_id) VALUES('{}','{}','{}',{},'{}','{}','{}','{}','{}','{}','{}',{},{},{},{},{})".format(
+                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
+                data[11], data[12], data[13], data[14], data[15])
         try:
             cursor = self.conn.cursor()
             cursor.execute(sql)
             self.conn.commit()
             cursor.close()
-            print('insert into project successful.')
+            if project_id is None:
+                print('insert into project successful.')
+            else:
+                print('update project successful.')
         except:
-            print('insert into project failed.')
+            if project_id is None:
+                print('insert into project failed.')
+            else:
+                print('update project failed.')
+
+    def delete_project(self, project_id):
+        print(project_id)
