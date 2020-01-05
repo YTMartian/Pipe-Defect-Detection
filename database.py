@@ -1,6 +1,8 @@
 from datetime import datetime
 
 import pymysql
+import time
+import os
 
 
 class Database:
@@ -190,7 +192,6 @@ class Database:
 
     # if project_id is None, then it is add project,or it is edit project.
     def add_project(self, data, project_id):
-        sql = ""
         if project_id is not None:
             sql = "UPDATE project SET project_no='{}',project_name='{}',project_address='{}',staff_id={},start_date='{}',report_no='{}',requester_unit='{}',construction_unit='{}',design_unit='{}',build_unit='{}',supervisory_unit='{}',detection_id={},move_id={},plugging_id={},drainage_id={},dredging_id={} WHERE project_id={}".format(
                 data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
@@ -215,4 +216,62 @@ class Database:
                 print('update project failed.')
 
     def delete_project(self, project_id):
-        print(project_id)
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT video_id FROM project_video WHERE project_id={}".format(project_id))
+            self.conn.commit()
+            data = cursor.fetchall()
+            video_ids = [i[0] for i in data]
+            cursor.close()
+            for video_id in video_ids:
+                self.delete_video(video_id)
+            cursor = self.conn.cursor()
+            cursor.execute("DELETE FROM project WHERE project_id={}".format(project_id))
+            self.conn.commit()
+            cursor.close()
+            print('delete project successful.')
+        except:
+            print('delete project failed.')
+
+    def delete_defect(self, defect_id):
+        sql = "DELETE FROM defect WHERE defect_id={}".format(defect_id)
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(sql)
+            self.conn.commit()
+            cursor.close()
+            print('delete defect successful.')
+        except:
+            print('delete defect failed.')
+
+    def add_video(self, project_id, video_name):
+        record_date = os.path.getmtime(video_name)  # get file modified time.
+        record_date = time.localtime(record_date)
+        record_date = time.strftime("%Y-%m-%d %H:%M:%S", record_date)
+        import_date = time.time()
+        import_date = time.localtime(import_date)
+        import_date = time.strftime("%Y-%m-%d %H:%M:%S", import_date)
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "INSERT INTO video(record_date,import_date,video_name) VALUES('{}','{}','{}')".format(record_date,
+                                                                                                      import_date,
+                                                                                                      video_name))
+            self.conn.commit()
+            video_id = cursor.lastrowid  # get latest id.
+            cursor.execute("INSERT INTO project_video VALUES({},{})".format(project_id, video_id))
+            self.conn.commit()
+            cursor.close()
+            print('insert into video successful.')
+        except:
+            print('insert into video failed.')
+
+    def delete_video(self, video_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("DELETE FROM video WHERE video_id={}".format(video_id))
+            self.conn.commit()
+            cursor.close()
+            print('delete video successful.')
+        except:
+            print('delete video failed.')

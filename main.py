@@ -1,12 +1,14 @@
 from PyQt5.QtCore import QDate
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
     QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu, \
-    QComboBox, QCalendarWidget, QDateEdit
+    QComboBox, QCalendarWidget, QDateEdit, QMessageBox
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
+from tkinter import filedialog
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
 from resources import *
 from database import *
+from tkinter import *
 import datetime
 import settings
 import time
@@ -768,7 +770,7 @@ class MainWindow(QMainWindow):
             if action == edit_defect:
                 print("编辑缺陷")
             elif action == delete_defect:
-                print("删除缺陷")
+                self.delete_defect(self.data[current_row_number][0])  # defect_id.
 
     def set_single_management_style(self, index):
         self.managements[index].setStyleSheet('''
@@ -895,7 +897,7 @@ class MainWindow(QMainWindow):
             for i in range(11, 15):
                 index = 0
                 for j in self.add_project_tables[i - 10]:
-                    if j == data[i+1]:
+                    if j == data[i + 1]:
                         break
                     index += 1
                 self.add_project_widgets[i].setCurrentIndex(index)
@@ -957,14 +959,42 @@ class MainWindow(QMainWindow):
         self.is_add_project = False
         self.project_management()
 
-    def delete_project(self, project_id):
-        print('删除工程 ', project_id)
-
     def add_video(self, project_id):
-        print("添加视频", project_id)
+        self.management_flag = self.video_management_flag
+        self.set_managements_style()
+        self.set_single_management_style(1)
+        root = Tk()
+        root.withdraw()
+        video_name = filedialog.askopenfilename(filetypes=[("video", "*.mp4 *.avi")], )
+        self.db.add_video(project_id, video_name)
+        self.video_management(project_id)
+
+    def delete_project(self, project_id):
+        reply = QMessageBox.question(self, '提示', '删除工程会删除所有相关联的视频和缺陷，是否确定删除？',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+        self.db.delete_project(project_id)
+        current_row_number = self.show_table.currentRow()
+        self.show_table.removeRow(current_row_number)
 
     def delete_video(self, video_id):
-        print("删除视频", video_id)
+        reply = QMessageBox.question(self, '提示', '删除视频会删除所有相关联的缺陷，是否确定删除？',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+        self.db.delete_video(video_id)
+        current_row_number = self.show_table.currentRow()
+        self.show_table.removeRow(current_row_number)
+
+    def delete_defect(self, defect_id):
+        reply = QMessageBox.question(self, '提示', '是否确定删除缺陷？',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+        current_row_number = self.show_table.currentRow()
+        self.show_table.removeRow(current_row_number)
+        self.db.delete_defect(defect_id)
 
 
 def main():
