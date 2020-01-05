@@ -1,5 +1,7 @@
+from PyQt5.QtCore import QDate
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
-    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu
+    QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu, \
+    QComboBox, QCalendarWidget, QDateEdit
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
@@ -21,6 +23,7 @@ class MainWindow(QMainWindow):
         self.settings = settings.Settings()
         self.db = Database()
         self.data = []
+        self.is_add_project = False
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -252,9 +255,6 @@ class MainWindow(QMainWindow):
         self.toggle_project_statistic_view = QRadioButton('工程统计')
         self.toggle_project_statistic_view.setChecked(False)
         self.toggle_project_statistic_view.toggled.connect(self.toggle_project_view)
-        self.toggle_project_field.addWidget(self.toggle_project_detailed_view)
-        self.toggle_project_field.addWidget(self.toggle_project_statistic_view)
-        self.manage_layout.addWidget(self.toggle_project_widget, 5, 5, 10, 1)
         self.toggle_project_widget.setStyleSheet('''
             QWidget{
                 font-family:"DengXian";
@@ -284,6 +284,40 @@ class MainWindow(QMainWindow):
                 border-radius:7px;
                 border:2px solid white;
         }''')
+
+        self.ensure_button = QPushButton()
+        self.ensure_button.setFixedSize(32, 32)
+        self.ensure_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.ensure_button.setStyleSheet('''
+            QPushButton{
+                border-radius:5px;
+                background-image:url(:/ensure);
+            }
+            QPushButton:hover{
+                background-image:url(:/ensure_hover);
+                background-repeat:no-repeat center
+            }
+        ''')
+        self.ensure_button.clicked.connect(self.ensure_add_project)
+        self.cancel_button = QPushButton()
+        self.cancel_button.setFixedSize(32, 32)
+        self.cancel_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.cancel_button.setStyleSheet('''
+            QPushButton{
+                border-radius:5px;
+                background-image:url(:/cancel);
+            }
+            QPushButton:hover{
+                background-image:url(:/cancel_hover);
+                background-repeat:no-repeat center
+            }
+        ''')
+        self.cancel_button.clicked.connect(self.cancel_add_project)
+        self.toggle_project_field.addWidget(self.ensure_button)
+        self.toggle_project_field.addWidget(self.cancel_button)
+        self.toggle_project_field.addWidget(self.toggle_project_detailed_view)
+        self.toggle_project_field.addWidget(self.toggle_project_statistic_view)
+        self.manage_layout.addWidget(self.toggle_project_widget, 5, 5, 10, 1)
 
         # show table.
         # settings in:https://blog.csdn.net/yekui006/article/details/98211808
@@ -326,6 +360,11 @@ class MainWindow(QMainWindow):
         self.show_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.show_table.setEditTriggers(QAbstractItemView.NoEditTriggers)  # set can't edit.
         self.show_table.setSelectionMode(QAbstractItemView.SingleSelection)  # can only select one line.
+
+        # all of the add project widgets.
+        self.add_project_widgets = []
+        # all of the ids and names in  ComboBox, e.g. the staff_id and staff_name.
+        self.add_project_tables = []  # table: staff,detection,move,plugging,drainage,dredging.
 
         self.hide_all()
 
@@ -600,6 +639,8 @@ class MainWindow(QMainWindow):
     def hide_all(self):
         self.toggle_project_statistic_view.setVisible(False)
         self.toggle_project_detailed_view.setVisible(False)
+        self.ensure_button.setVisible(False)
+        self.cancel_button.setVisible(False)
         self.show_table.setVisible(False)
 
     def search(self):
@@ -617,6 +658,9 @@ class MainWindow(QMainWindow):
             pass
 
     def toggle_project_view(self):
+        self.ensure_button.setVisible(False)
+        self.cancel_button.setVisible(False)
+        self.is_add_project = False
         if self.toggle_project_detailed_view.isChecked():
             self.show_table.setColumnCount(16)
             self.show_table.setRowCount(0)
@@ -653,7 +697,9 @@ class MainWindow(QMainWindow):
 
     # right click menu.
     def contextMenuEvent(self, event):
-        # get current selected row number.
+        if self.is_add_project:
+            return
+        # get current selected row number, start from 0.
         current_row_number = self.show_table.currentRow()
         if current_row_number == -1:  # didn't select any row.
             return
@@ -670,8 +716,12 @@ class MainWindow(QMainWindow):
         ''')
         if self.management_flag == self.project_management_flag:
             video_management = context_menu.addAction("视频管理")
-            add_project = context_menu.addAction("添加工程")
-            edit_project = context_menu.addAction("编辑工程")
+            add_project = ''
+            edit_project = ''
+            # can only do these in detailed project view.
+            if self.toggle_project_detailed_view.isChecked():
+                add_project = context_menu.addAction("添加工程")
+                edit_project = context_menu.addAction("编辑工程")
             generate_document = context_menu.addAction("生成报告")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == video_management:
@@ -680,7 +730,7 @@ class MainWindow(QMainWindow):
                 self.set_single_management_style(1)
                 self.video_management(self.data[current_row_number][0])  # get current project_id's videos.
             elif action == add_project:
-                print('添加工程')
+                self.add_project()
             elif action == edit_project:
                 print("编辑工程")
             elif action == generate_document:
@@ -720,6 +770,151 @@ class MainWindow(QMainWindow):
                 padding:10px 10px 10px 10px;
             }
         ''')
+
+    def add_project(self):
+        self.is_add_project = True
+        self.ensure_button.setVisible(True)
+        self.cancel_button.setVisible(True)
+        self.show_table.setRowCount(self.show_table.rowCount() + 1)  # add new row.
+        row = self.show_table.rowCount() - 1
+        self.show_table.selectRow(row)  # set select row.
+        self.add_project_widgets.clear()
+        self.add_project_widgets.append(QLineEdit())  # project_no.
+        self.add_project_widgets[0].setPlaceholderText('工程编号...')
+        self.show_table.setCellWidget(row, 0, self.add_project_widgets[0])
+        self.add_project_widgets.append(QLineEdit())  # project_name.
+        self.add_project_widgets[1].setPlaceholderText('工程名称...')
+        self.show_table.setCellWidget(row, 1, self.add_project_widgets[1])
+        self.add_project_widgets.append(QLineEdit())  # project_address.
+        self.add_project_widgets[2].setPlaceholderText('工程地址...')
+        self.show_table.setCellWidget(row, 2, self.add_project_widgets[2])
+        self.add_project_widgets.append(QComboBox())  # staff_name.
+        staff = self.db.get_add_project_tables('staff')
+        self.add_project_tables.append(staff)
+        for i in staff:
+            self.add_project_widgets[3].addItem(i[1])
+        self.show_table.setCellWidget(row, 3, self.add_project_widgets[3])
+        self.add_project_widgets.append(QDateEdit())  # start_date
+        self.add_project_widgets[4].setDate(QDate.currentDate())
+        self.add_project_widgets[4].setCalendarPopup(True)
+        self.add_project_widgets[4].setStyleSheet('''
+            QDateEdit{
+                width:20px;
+            }
+        ''')
+        self.show_table.setCellWidget(row, 4, self.add_project_widgets[4])
+        self.add_project_widgets.append(QLineEdit())  # report_no.
+        self.add_project_widgets[5].setPlaceholderText('报告编号...')
+        self.show_table.setCellWidget(row, 5, self.add_project_widgets[5])
+        self.add_project_widgets.append(QLineEdit())  # requester_unit.
+        self.add_project_widgets[6].setPlaceholderText('委托单位...')
+        self.show_table.setCellWidget(row, 6, self.add_project_widgets[6])
+        self.add_project_widgets.append(QLineEdit())  # construction_unit.
+        self.add_project_widgets[7].setPlaceholderText('建设单位...')
+        self.show_table.setCellWidget(row, 7, self.add_project_widgets[7])
+        self.add_project_widgets.append(QLineEdit())  # design_unit.
+        self.add_project_widgets[8].setPlaceholderText('设计单位...')
+        self.show_table.setCellWidget(row, 8, self.add_project_widgets[8])
+        self.add_project_widgets.append(QLineEdit())  # build_unit.
+        self.add_project_widgets[9].setPlaceholderText('施工单位...')
+        self.show_table.setCellWidget(row, 9, self.add_project_widgets[9])
+        self.add_project_widgets.append(QLineEdit())  # supervisory_unit.
+        self.add_project_widgets[10].setPlaceholderText('监理单位...')
+        self.show_table.setCellWidget(row, 10, self.add_project_widgets[10])
+        self.add_project_widgets.append(QComboBox())  # detection_method.
+        detection = self.db.get_add_project_tables('detection')
+        self.add_project_tables.append(detection)
+        for i in detection:
+            self.add_project_widgets[11].addItem(i[1])
+        self.show_table.setCellWidget(row, 11, self.add_project_widgets[11])
+        self.add_project_widgets.append(QComboBox())  # move_method.
+        move = self.db.get_add_project_tables('move')
+        self.add_project_tables.append(move)
+        for i in move:
+            self.add_project_widgets[12].addItem(i[1])
+        self.show_table.setCellWidget(row, 12, self.add_project_widgets[12])
+        self.add_project_widgets.append(QComboBox())  # plugging_method.
+        plugging = self.db.get_add_project_tables('plugging')
+        self.add_project_tables.append(plugging)
+        for i in plugging:
+            self.add_project_widgets[13].addItem(i[1])
+        self.show_table.setCellWidget(row, 13, self.add_project_widgets[13])
+        self.add_project_widgets.append(QComboBox())  # drainage_method.
+        drainage = self.db.get_add_project_tables('drainage')
+        self.add_project_tables.append(drainage)
+        for i in drainage:
+            self.add_project_widgets[14].addItem(i[1])
+        self.show_table.setCellWidget(row, 14, self.add_project_widgets[14])
+        self.add_project_widgets.append(QComboBox())  # dredging _method.
+        dredging = self.db.get_add_project_tables('dredging')
+        self.add_project_tables.append(dredging)
+        for i in drainage:
+            self.add_project_widgets[15].addItem(i[1])
+        self.show_table.setCellWidget(row, 15, self.add_project_widgets[15])
+        # set all of the combo boxes' style.
+        for i in range(11, 16):
+            self.add_project_widgets[i].setStyleSheet('''
+                QComboBox{
+                    width:50px;
+                }
+            ''')
+
+    def ensure_add_project(self):
+
+        data = []
+        project_no = self.add_project_widgets[0].text()
+        if len(project_no) == 0:
+            QtWidgets.QMessageBox.information(self, '提示', '工程编号不能为空')
+            return
+        data.append(project_no)
+        project_name = self.add_project_widgets[1].text()
+        if len(project_name) == 0:
+            QtWidgets.QMessageBox.information(self, '提示', '工程名称不能为空')
+            return
+        data.append(project_name)
+        project_address = self.add_project_widgets[2].text()
+        if len(project_address) == 0:
+            QtWidgets.QMessageBox.information(self, '提示', '工程地址不能为空')
+            return
+        data.append(project_address)
+        staff_id = self.add_project_tables[0][self.add_project_widgets[3].currentIndex()][0]
+        data.append(staff_id)
+        start_date = self.add_project_widgets[4].date().toString(QtCore.Qt.ISODate)
+        data.append(start_date)
+        report_no = self.add_project_widgets[5].text()
+        data.append(report_no)
+        requester_unit = self.add_project_widgets[6].text()
+        data.append(requester_unit)
+        construction_unit = self.add_project_widgets[7].text()
+        data.append(construction_unit)
+        design_unit = self.add_project_widgets[8].text()
+        data.append(design_unit)
+        build_unit = self.add_project_widgets[9].text()
+        data.append(build_unit)
+        supervisory_unit = self.add_project_widgets[10].text()
+        data.append(supervisory_unit)
+        detection_id = self.add_project_tables[1][self.add_project_widgets[11].currentIndex()][0]
+        data.append(detection_id)
+        move_id = self.add_project_tables[2][self.add_project_widgets[12].currentIndex()][0]
+        data.append(move_id)
+        plugging_id = self.add_project_tables[3][self.add_project_widgets[13].currentIndex()][0]
+        data.append(plugging_id)
+        drainage_id = self.add_project_tables[4][self.add_project_widgets[14].currentIndex()][0]
+        data.append(drainage_id)
+        dredging_id = self.add_project_tables[5][self.add_project_widgets[15].currentIndex()][0]
+        data.append(dredging_id)
+
+        self.ensure_button.setVisible(False)
+        self.cancel_button.setVisible(False)
+        self.is_add_project = False
+        self.db.add_project(data)
+        self.project_management()
+
+    def cancel_add_project(self):
+        self.ensure_button.setVisible(False)
+        self.cancel_button.setVisible(False)
+        self.show_table.setRowCount(self.show_table.rowCount() - 1)  # delete the last row.
+        self.is_add_project = False
 
 
 def main():

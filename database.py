@@ -71,7 +71,7 @@ class Database:
         cursor.close()
         res = []
         for i in data:
-            temp = [str(i[j]) for j in range(0, 6)]# the first item is project_id, we need to record it.
+            temp = [str(i[j]) for j in range(0, 6)]  # the first item is project_id, we need to record it.
             staff_id = temp[4]
             project_id = str(i[0])
             temp[4] = self.get_name('staff', staff_id)
@@ -162,3 +162,31 @@ class Database:
 
             res.append(temp.copy())
         return res
+
+    # get id and name of staff,detection,move,plugging,drainage,dredging.
+    def get_add_project_tables(self, table):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM {}".format(table))
+        self.conn.commit()
+        data = cursor.fetchall()
+        cursor.close()
+        res = []
+        for i in data:
+            temp = []
+            temp.append(str(i[0]))  # id.
+            temp.append(str(i[1]))  # name.
+            res.append(temp.copy())
+        return res
+
+    def add_project(self, data):
+        sql = "INSERT INTO project(project_no,project_name,project_address,staff_id,start_date,report_no,requester_unit,construction_unit,design_unit,build_unit,supervisory_unit,detection_id,move_id,plugging_id,drainage_id,dredging_id) VALUES('{}','{}','{}',{},'{}','{}','{}','{}','{}','{}','{}',{},{},{},{},{})".format(
+            data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
+            data[11], data[12], data[13], data[14], data[15])
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(sql)
+            self.conn.commit()
+            cursor.close()
+            print('insert into project successful.')
+        except:
+            print('insert into project failed.')

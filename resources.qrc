@@ -19,6 +19,10 @@
 <file alias="video_management">resources/video_management.png</file>
 <file alias="search">resources/search.png</file>
 <file alias="search_hover">resources/search_hover.png</file>
+<file alias="ensure">resources/ensure.png</file>
+<file alias="ensure_hover">resources/ensure_hover.png</file>
+<file alias="cancel">resources/cancel.png</file>
+<file alias="cancel_hover">resources/cancel_hover.png</file>
  
 </qresource>
 </RCC>
