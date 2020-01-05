@@ -275,3 +275,6 @@ class Database:
             print('delete video successful.')
         except:
             print('delete video failed.')
+
+    def update_video(self, video_id, data):
+        pass
