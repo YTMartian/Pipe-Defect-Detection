@@ -34,6 +34,7 @@ class Edit(QMainWindow):
 
         self.left_widget = QtWidgets.QWidget(self)
         self.left_layout = QtWidgets.QGridLayout()
+
         self.left_widget.setLayout(self.left_layout)
         self.left_widget.setStyleSheet('''
             QWidget{
@@ -77,7 +78,7 @@ class Edit(QMainWindow):
         self.right_layout.addWidget(self.right_top_widget, 0, 0, 1, 3)
         self.right_bottom_layout = QHBoxLayout()
         self.right_bottom_layout.setSpacing(5)
-        self.right_bottom_layout.setContentsMargins(0, 0, 0, 0)
+        self.right_bottom_layout.setContentsMargins(0, 10, 0, 0)
         self.right_bottom_layout.setAlignment(QtCore.Qt.AlignCenter)
         self.save_button = QPushButton()
         self.save_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
