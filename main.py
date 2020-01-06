@@ -9,6 +9,7 @@ from PyQt5 import QtGui
 from resources import *
 from database import *
 from tkinter import *
+from edit import *
 import datetime
 import settings
 import time
@@ -29,6 +30,11 @@ class MainWindow(QMainWindow):
         self.is_add_project = False
         self.is_edit_project = False
         self.edit_project_id = None
+        self.is_edit_video = 0
+        self.is_edit_defect = 1
+        edit = Edit(self.db, self.is_edit_video, video_id=26)
+        edit.show()
+        edit.exec_()
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -758,17 +764,23 @@ class MainWindow(QMainWindow):
                 self.set_single_management_style(2)
                 self.defect_management(self.data[current_row_number][0])  # video_id
             elif action == edit_video:
-                print("编辑视频")
+                edit = Edit(self.db, self.is_edit_video, video_id=self.data[current_row_number][0])
+                edit.show()
+                edit.exec_()
             elif action == delete_video:
                 self.delete_video(self.data[current_row_number][0])
             elif action == add_defect:
-                print("添加缺陷")
+                edit = Edit(self.db, self.is_edit_defect, video_id=self.data[current_row_number][0])
+                edit.show()
+                edit.exec_()
         elif self.management_flag == self.defect_management_flag:
             edit_defect = context_menu.addAction("编辑缺陷")
             delete_defect = context_menu.addAction("删除缺陷")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == edit_defect:
-                print("编辑缺陷")
+                edit = Edit(self.db, self.is_edit_defect, defect_id=self.data[current_row_number][0])
+                edit.show()
+                edit.exec_()
             elif action == delete_defect:
                 self.delete_defect(self.data[current_row_number][0])  # defect_id.
 

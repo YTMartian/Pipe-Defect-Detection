@@ -245,7 +245,11 @@ class Database:
             print('delete defect failed.')
 
     def add_video(self, project_id, video_name):
-        record_date = os.path.getmtime(video_name)  # get file modified time.
+        try:
+            record_date = os.path.getmtime(video_name)  # get file modified time.
+        except:
+            print('import video failed.')
+            return
         record_date = time.localtime(record_date)
         record_date = time.strftime("%Y-%m-%d %H:%M:%S", record_date)
         import_date = time.time()
