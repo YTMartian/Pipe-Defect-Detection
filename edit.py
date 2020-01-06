@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QIcon, QCursor
-from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWindow, QHBoxLayout
+from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWindow, QHBoxLayout, QFormLayout, QLineEdit, \
+    QComboBox
 
 
 class Edit(QMainWindow):
@@ -43,63 +44,31 @@ class Edit(QMainWindow):
         self.right_layout = QtWidgets.QGridLayout()
         self.right_layout.setSpacing(0)
         self.right_widget.setLayout(self.right_layout)
+        self.right_widget.setFixedWidth(370)
         self.main_layout.addWidget(self.left_widget, 0, 0, 1, 2)
         self.main_layout.addWidget(self.right_widget, 0, 2, 1, 1)
         self.right_top_layout = QHBoxLayout()
-        self.right_top_layout.setSpacing(20)
+        self.right_top_layout.setSpacing(5)
         self.right_top_layout.setContentsMargins(0, 0, 0, 10)
         self.right_top_layout.setAlignment(QtCore.Qt.AlignCenter)
         self.edit_video_button = QPushButton()
         self.edit_video_button.setText('检测信息')
         self.edit_video_button.setIcon(QIcon(":/edit_video_button"))
-        self.edit_video_button.setStyleSheet('''
-            QPushButton{
-                    font-weight:bold;
-                    background-color:#434343;
-                    color:#f1f1f1;
-                    font-size:16px;
-                    border-radius:10px;
-                    font-family:"Microsoft YaHei";
-                    padding:10px 10px 10px 10px;
-                }
-                QPushButton:hover{
-                    background-color:#131313;
-                }
-        ''')
+        self.edit_video_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.edit_video_button.clicked.connect(self.edit_video_button_clicked)
+
         self.edit_defect_button = QPushButton()
         self.edit_defect_button.setText('缺陷记录')
         self.edit_defect_button.setIcon(QIcon(":/edit_defect_button"))
-        self.edit_defect_button.setStyleSheet('''
-            QPushButton{
-                    font-weight:bold;
-                    background-color:#434343;
-                    color:#f1f1f1;
-                    font-size:16px;
-                    border-radius:10px;
-                    font-family:"Microsoft YaHei";
-                    padding:10px 10px 10px 10px;
-                }
-                QPushButton:hover{
-                    background-color:#131313;
-                }
-        ''')
+        self.edit_defect_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.edit_defect_button.clicked.connect(self.edit_defect_button_clicked)
+
         self.project_detailed_button = QPushButton()
         self.project_detailed_button.setText('工程详情')
         self.project_detailed_button.setIcon(QIcon(":/project_detailed_button"))
-        self.project_detailed_button.setStyleSheet('''
-            QPushButton{
-                    font-weight:bold;
-                    background-color:#434343;
-                    color:#f1f1f1;
-                    font-size:16px;
-                    border-radius:10px;
-                    font-family:"Microsoft YaHei";
-                    padding:10px 10px 10px 10px;
-                }
-                QPushButton:hover{
-                    background-color:#131313;
-                }
-        ''')
+        self.project_detailed_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.project_detailed_button.clicked.connect(self.project_detailed_button_clicked)
+
         self.right_top_layout.addWidget(self.edit_video_button)
         self.right_top_layout.addWidget(self.edit_defect_button)
         self.right_top_layout.addWidget(self.project_detailed_button)
@@ -154,16 +123,28 @@ class Edit(QMainWindow):
         self.right_bottom_widget.setLayout(self.right_bottom_layout)
         self.right_layout.addWidget(self.right_bottom_widget, 22, 0, 1, 3)
 
-        w = QtWidgets.QWidget()
+        # scroll area.
+        self.scroll_area_widget = QtWidgets.QWidget()
+        self.scroll_area_widget.setStyleSheet('''
+            QWidget{
+                color:#232323;
+                font-size:16px;
+                font-family:"Microsoft YaHei";
+            }
+        ''')
         self.setCentralWidget(self.main_widget)
-        self.labels = [QLabel(w) for i in range(39)]
+        self.scroll_area_form = QFormLayout()
+        self.labels = [QLabel() for i in range(39)]
+        self.buttons = [QComboBox() for i in range(39)]
         for i in range(len(self.labels)):
-            self.labels[i].setText("测试" + str(i))
-            self.labels[i].move(10, i * 20)
+            self.labels[i].setText("标签" + str(i))
+            self.scroll_area_form.addRow(self.labels[i], self.buttons[i])
+        self.scroll_area_widget.setLayout(self.scroll_area_form)
         self.scroll_area = QScrollArea()
-        self.scroll_area.setWidget(w)
+        self.scroll_area.setWidget(self.scroll_area_widget)
         self.right_layout.addWidget(self.scroll_area, 2, 0, 20, 3)
 
+        self.set_three_buttons_style()
         self.hide_something()
 
     def save(self):
@@ -185,3 +166,96 @@ class Edit(QMainWindow):
         else:
             self.save_button.setVisible(True)
             self.cancel_button.setVisible(True)
+
+    def edit_video_button_clicked(self):
+        self.mode = self.is_edit_video
+        self.set_three_buttons_style()
+
+    def edit_defect_button_clicked(self):
+        self.mode = self.is_edit_defect
+        self.set_three_buttons_style()
+
+    def project_detailed_button_clicked(self):
+        self.mode = self.is_show_project_info
+        self.set_three_buttons_style()
+
+    # set edit_video_button,edit_defect_button and project_detailed_button's style.
+    def set_three_buttons_style(self):
+        self.edit_video_button.setStyleSheet('''
+            QPushButton{
+                    font-weight:bold;
+                    background-color:#535353;
+                    color:#f1f1f1;
+                    font-size:16px;
+                    border-radius:10px;
+                    font-family:"Microsoft YaHei";
+                    padding:10px 10px 10px 10px;
+                }
+                QPushButton:hover{
+                    background-color:#131313;
+                }
+        ''')
+        self.edit_defect_button.setStyleSheet('''
+            QPushButton{
+                    font-weight:bold;
+                    background-color:#535353;
+                    color:#f1f1f1;
+                    font-size:16px;
+                    border-radius:10px;
+                    font-family:"Microsoft YaHei";
+                    padding:10px 10px 10px 10px;
+                }
+                QPushButton:hover{
+                    background-color:#131313;
+                }
+        ''')
+        self.project_detailed_button.setStyleSheet('''
+            QPushButton{
+                    font-weight:bold;
+                    background-color:#535353;
+                    color:#f1f1f1;
+                    font-size:16px;
+                    border-radius:10px;
+                    font-family:"Microsoft YaHei";
+                    padding:10px 10px 10px 10px;
+                }
+                QPushButton:hover{
+                    background-color:#131313;
+                }
+        ''')
+        if self.mode == self.is_edit_video:
+            self.edit_video_button.setStyleSheet('''
+                QPushButton{
+                        font-weight:bold;
+                        background-color:#131313;
+                        color:#f1f1f1;
+                        font-size:16px;
+                        border-radius:10px;
+                        font-family:"Microsoft YaHei";
+                        padding:10px 10px 10px 10px;
+                    }
+            ''')
+        elif self.mode == self.is_edit_defect:
+            self.edit_defect_button.setStyleSheet('''
+                QPushButton{
+                        font-weight:bold;
+                        background-color:#131313;
+                        color:#f1f1f1;
+                        font-size:16px;
+                        border-radius:10px;
+                        font-family:"Microsoft YaHei";
+                        padding:10px 10px 10px 10px;
+                    }
+            ''')
+        elif self.mode == self.is_show_project_info:
+            self.project_detailed_button.setStyleSheet('''
+                QPushButton{
+                        font-weight:bold;
+                        background-color:#131313;
+                        color:#f1f1f1;
+                        font-size:16px;
+                        border-radius:10px;
+                        font-family:"Microsoft YaHei";
+                        padding:10px 10px 10px 10px;
+                    }
+            ''')
