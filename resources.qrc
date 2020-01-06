@@ -23,6 +23,10 @@
 <file alias="ensure_hover">resources/ensure_hover.png</file>
 <file alias="cancel">resources/cancel.png</file>
 <file alias="cancel_hover">resources/cancel_hover.png</file>
- 
+<file alias="save">resources/save.png</file>
+<file alias="edit_video_button">resources/edit_video_button.png</file>
+<file alias="edit_defect_button">resources/edit_defect_button.png</file>
+<file alias="project_detailed_button">resources/project_detailed_button.png</file>
+
 </qresource>
 </RCC>

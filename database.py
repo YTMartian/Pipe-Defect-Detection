@@ -18,7 +18,7 @@ class Database:
                                         database=self.database)
         except:
             print('error code 2')
-        print('connect successful.')
+        print('connect database successful.')
 
     def __del__(self):
         try:
@@ -111,10 +111,11 @@ class Database:
     def get_video(self, project_id):
         cursor = self.conn.cursor()
         if project_id is None:
-            cursor.execute("SELECT * FROM video")
+            cursor.execute(
+                "SELECT video_id,road_name,start_manhole_no,end_manhole_no,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video")
         else:
             cursor.execute(
-                "SELECT * FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
+                "SELECT video_id,road_name,start_manhole_no,end_manhole_no,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
                     project_id))
         self.conn.commit()
         data = cursor.fetchall()
@@ -122,14 +123,15 @@ class Database:
         res = []
         for i in data:
             temp = []
+            print(len(i))
             temp.append(str(i[0]))  # video_id.
-            temp.append(str(i[3]))  # road_name.
-            temp.append(str(i[4]) + ' ~ ' + str(i[13]))  # pipe number.
-            temp.append(str(i[24]))  # pipe_type_id.
-            temp.append(str(i[27]))  # pipe_material_id.
-            temp.append(str(i[38]))  # video_name.
-            temp.append(str(i[2]))  # record_date.
-            temp.append(str(i[39]))  # import_date.
+            temp.append(str(i[1]))  # road_name.
+            temp.append(str(i[2]) + ' ~ ' + str(i[3]))  # pipe number.
+            temp.append(str(i[4]))  # pipe_type_id.
+            temp.append(str(i[5]))  # pipe_material_id.
+            temp.append(str(i[6]))  # video_name.
+            temp.append(str(i[7]))  # record_date.
+            temp.append(str(i[8]))  # import_date.
             temp[3] = self.get_name('pipe_type', temp[3])
             temp[4] = self.get_name('pipe_material', temp[4])
             defect_amount = self.get_value("SELECT COUNT(*) FROM defect WHERE video_id = {}".format(temp[0]))

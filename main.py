@@ -21,10 +21,11 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle('Pipe Defect Detection')
+        self.settings = settings.Settings()
+        self.setWindowTitle(self.settings.app_name)
         self.setWindowIcon(QIcon(':/app_icon'))
         self.setMinimumSize(1280, 720)
-        self.settings = settings.Settings()
+
         self.db = Database()
         self.data = []
         self.is_add_project = False
@@ -32,9 +33,8 @@ class MainWindow(QMainWindow):
         self.edit_project_id = None
         self.is_edit_video = 0
         self.is_edit_defect = 1
-        edit = Edit(self.db, self.is_edit_video, video_id=26)
+        edit = Edit(self.db, self.is_edit_video, video_id=26, main_window=self)
         edit.show()
-        edit.exec_()
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
         self.main_widget.setAutoFillBackground(True)  # in this way the widget would not be transparent.
         self.main_widget.setPalette(background)
         self.main_layout = QtWidgets.QGridLayout()  # create main window layout.
-        self.main_layout.setSpacing(0)
+        self.main_layout.setSpacing(0)  # the spacing between two widgets in the layout.
         self.main_layout.setContentsMargins(
             self.margin, self.margin, self.margin, self.margin)  # the margin between layout and main window.
         self.main_widget.setLayout(self.main_layout)  # set main window layout.
@@ -755,7 +755,7 @@ class MainWindow(QMainWindow):
         elif self.management_flag == self.video_management_flag:
             defect_management = context_menu.addAction("缺陷管理")
             add_defect = context_menu.addAction("添加缺陷")
-            edit_video = context_menu.addAction("编辑视频")
+            edit_video = context_menu.addAction("检测信息")
             delete_video = context_menu.addAction("删除视频")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == defect_management:
@@ -764,23 +764,21 @@ class MainWindow(QMainWindow):
                 self.set_single_management_style(2)
                 self.defect_management(self.data[current_row_number][0])  # video_id
             elif action == edit_video:
-                edit = Edit(self.db, self.is_edit_video, video_id=self.data[current_row_number][0])
+                # open another dialog.
+                edit = Edit(self.db, self.is_edit_video, video_id=self.data[current_row_number][0], main_window=self)
                 edit.show()
-                edit.exec_()
             elif action == delete_video:
                 self.delete_video(self.data[current_row_number][0])
             elif action == add_defect:
-                edit = Edit(self.db, self.is_edit_defect, video_id=self.data[current_row_number][0])
+                edit = Edit(self.db, self.is_edit_defect, video_id=self.data[current_row_number][0], main_window=self)
                 edit.show()
-                edit.exec_()
         elif self.management_flag == self.defect_management_flag:
             edit_defect = context_menu.addAction("编辑缺陷")
             delete_defect = context_menu.addAction("删除缺陷")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == edit_defect:
-                edit = Edit(self.db, self.is_edit_defect, defect_id=self.data[current_row_number][0])
+                edit = Edit(self.db, self.is_edit_defect, defect_id=self.data[current_row_number][0], main_window=self)
                 edit.show()
-                edit.exec_()
             elif action == delete_defect:
                 self.delete_defect(self.data[current_row_number][0])  # defect_id.
 

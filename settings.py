@@ -6,7 +6,7 @@ from tkinter import *
 class Settings(object):
     def __init__(self):
         try:
-            f = open('settings.json')
+            f = open('settings.json', 'r', encoding='UTF-8')
             self.data = str(f.read())
             f.close()
         except Exception as e:
@@ -15,6 +15,7 @@ class Settings(object):
             return
         self.data = json.loads(self.data)
         self.background_image = self.data['background_image']
+        self.app_name = self.data['app_name']
 
     def change_background(self):
         # in this case, the tk window would close after choose image.
@@ -27,7 +28,7 @@ class Settings(object):
         self.data['background_image'] = path
         self.background_image = self.data['background_image']
         try:
-            f = open('settings.json', 'w')
+            f = open('settings.json', 'w', encoding='UTF-8')
             write_data = str(self.data).replace('\'', '\"')
             f.write(write_data)
             f.close()
