@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWindow, QHBoxLayout, QFormLayout, QLineEdit, \
-    QComboBox, QDateEdit
+    QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox
 
 
 class Edit(QMainWindow):
@@ -126,8 +126,26 @@ class Edit(QMainWindow):
         self.right_layout.addWidget(self.right_bottom_widget, 22, 0, 1, 3)
 
         # scroll area.
-        self.scroll_area_widget = QtWidgets.QWidget()
-        self.scroll_area_widget.setStyleSheet('''
+        self.edit_video_scroll_area_widget = QtWidgets.QWidget()
+        self.edit_defect_scroll_area_widget = QtWidgets.QWidget()
+        self.project_detailed_scroll_area_widget = QtWidgets.QWidget()
+        self.edit_video_scroll_area_widget.setStyleSheet('''
+            QWidget{
+                color:#232323;
+                font-size:18px;
+                font-weight:bold;
+                font-family:"DengXian";
+            }
+        ''')
+        self.edit_defect_scroll_area_widget.setStyleSheet('''
+            QWidget{
+                color:#232323;
+                font-size:18px;
+                font-weight:bold;
+                font-family:"DengXian";
+            }
+        ''')
+        self.project_detailed_scroll_area_widget.setStyleSheet('''
             QWidget{
                 color:#232323;
                 font-size:18px;
@@ -136,134 +154,185 @@ class Edit(QMainWindow):
             }
         ''')
         self.setCentralWidget(self.main_widget)
-        self.scroll_area_form = QFormLayout()
+        self.edit_video_scroll_area_form = QFormLayout()
+        self.edit_defect_scroll_area_form = QFormLayout()
+        self.project_detailed_scroll_area_form = QFormLayout()
 
-        # all of the labels and widgets in right layout.
+        """
+        all of the labels and widgets in edit_video.
+        """
         self.video_name_label, self.video_name_widget = QLabel(), QLineEdit()
         self.video_name_label.setText('视频文件名')
-        self.scroll_area_form.addRow(self.video_name_label, self.video_name_widget)
+        self.video_name_widget.setReadOnly(True)
+        self.edit_video_scroll_area_form.addRow(self.video_name_label, self.video_name_widget)
         self.staff_label, self.staff_widget = QLabel(), QComboBox()
         self.staff_label.setText('检测人员')
-        self.scroll_area_form.addRow(self.staff_label, self.staff_widget)
+        self.edit_video_scroll_area_form.addRow(self.staff_label, self.staff_widget)
         self.record_date_label, self.record_date_widget = QLabel(), QLineEdit()
         self.record_date_label.setText('检测日期')
-        self.scroll_area_form.addRow(self.record_date_label, self.record_date_widget)
+        self.edit_video_scroll_area_form.addRow(self.record_date_label, self.record_date_widget)
         self.import_date_label, self.import_date_widget = QLabel(), QLineEdit()
         self.import_date_label.setText('导入日期')
-        self.scroll_area_form.addRow(self.import_date_label, self.import_date_widget)
+        self.edit_video_scroll_area_form.addRow(self.import_date_label, self.import_date_widget)
         self.road_name_label, self.road_name_widget = QLabel(), QLineEdit()
         self.road_name_label.setText('道路名称')
-        self.scroll_area_form.addRow(self.road_name_label, self.road_name_widget)
+        self.edit_video_scroll_area_form.addRow(self.road_name_label, self.road_name_widget)
         self.start_manhole_no_label, self.start_manhole_no_widget = QLabel(), QLineEdit()
         self.start_manhole_no_label.setText('起始井编号')
-        self.scroll_area_form.addRow(self.start_manhole_no_label, self.start_manhole_no_widget)
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_no_label, self.start_manhole_no_widget)
         self.start_manhole_type_label, self.start_manhole_type_widget = QLabel(), QComboBox()
         self.start_manhole_type_label.setText('起始井类型')
-        self.scroll_area_form.addRow(self.start_manhole_type_label, self.start_manhole_type_widget)
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_type_label, self.start_manhole_type_widget)
         self.start_manhole_material_label, self.start_manhole_material_widget = QLabel(), QComboBox()
         self.start_manhole_material_label.setText('起始井材质')
-        self.scroll_area_form.addRow(self.start_manhole_material_label, self.start_manhole_material_widget)
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_material_label, self.start_manhole_material_widget)
         self.start_manhole_cover_label, self.start_manhole_cover_widget = QLabel(), QComboBox()
         self.start_manhole_cover_label.setText('起始井盖材质')
-        self.scroll_area_form.addRow(self.start_manhole_cover_label, self.start_manhole_cover_widget)
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_cover_label, self.start_manhole_cover_widget)
         self.start_manhole_internal_defect_label, self.start_manhole_internal_defect_widget = QLabel(), QLineEdit()
         self.start_manhole_internal_defect_label.setText('起始井内部缺陷')
-        self.scroll_area_form.addRow(self.start_manhole_internal_defect_label,
-                                     self.start_manhole_internal_defect_widget)
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_internal_defect_label,
+                                                self.start_manhole_internal_defect_widget)
         self.start_manhole_external_defect_label, self.start_manhole_external_defect_widget = QLabel(), QLineEdit()
         self.start_manhole_external_defect_label.setText('起始井外部缺陷')
-        self.scroll_area_form.addRow(self.start_manhole_external_defect_label,
-                                     self.start_manhole_external_defect_widget)
-        self.start_manhole_longitude_label, self.start_manhole_longitude_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_external_defect_label,
+                                                self.start_manhole_external_defect_widget)
+        self.start_manhole_longitude_label, self.start_manhole_longitude_widget = QLabel(), QDoubleSpinBox()
         self.start_manhole_longitude_label.setText('起始井经度坐标')
-        self.scroll_area_form.addRow(self.start_manhole_longitude_label, self.start_manhole_longitude_widget)
-        self.start_manhole_latitude_label, self.start_manhole_latitude_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_longitude_label, self.start_manhole_longitude_widget)
+        self.start_manhole_latitude_label, self.start_manhole_latitude_widget = QLabel(), QDoubleSpinBox()
         self.start_manhole_latitude_label.setText('起始井纬度坐标')
-        self.scroll_area_form.addRow(self.start_manhole_latitude_label, self.start_manhole_latitude_widget)
-        self.start_manhole_pipe_elevation_label, self.start_manhole_pipe_elevation_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_latitude_label, self.start_manhole_latitude_widget)
+        self.start_manhole_pipe_elevation_label, self.start_manhole_pipe_elevation_widget = QLabel(), QDoubleSpinBox()
         self.start_manhole_pipe_elevation_label.setText('起始井高程')
-        self.scroll_area_form.addRow(self.start_manhole_pipe_elevation_label, self.start_manhole_pipe_elevation_widget)
+        self.edit_video_scroll_area_form.addRow(self.start_manhole_pipe_elevation_label,
+                                                self.start_manhole_pipe_elevation_widget)
         self.end_manhole_no_label, self.end_manhole_no_widget = QLabel(), QLineEdit()
         self.end_manhole_no_label.setText('结束井编号')
-        self.scroll_area_form.addRow(self.end_manhole_no_label, self.end_manhole_no_widget)
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_no_label, self.end_manhole_no_widget)
         self.end_manhole_type_label, self.end_manhole_type_widget = QLabel(), QComboBox()
         self.end_manhole_type_label.setText('结束井类型')
-        self.scroll_area_form.addRow(self.end_manhole_type_label, self.end_manhole_type_widget)
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_type_label, self.end_manhole_type_widget)
         self.end_manhole_material_label, self.end_manhole_material_widget = QLabel(), QComboBox()
         self.end_manhole_material_label.setText('结束井材质')
-        self.scroll_area_form.addRow(self.end_manhole_material_label, self.end_manhole_material_widget)
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_material_label, self.end_manhole_material_widget)
         self.end_manhole_cover_label, self.end_manhole_cover_widget = QLabel(), QComboBox()
         self.end_manhole_cover_label.setText('结束井盖材质')
-        self.scroll_area_form.addRow(self.end_manhole_cover_label, self.end_manhole_cover_widget)
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_cover_label, self.end_manhole_cover_widget)
         self.end_manhole_internal_defect_label, self.end_manhole_internal_defect_widget = QLabel(), QLineEdit()
         self.end_manhole_internal_defect_label.setText('结束井内部缺陷')
-        self.scroll_area_form.addRow(self.end_manhole_internal_defect_label,
-                                     self.end_manhole_internal_defect_widget)
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_internal_defect_label,
+                                                self.end_manhole_internal_defect_widget)
         self.end_manhole_external_defect_label, self.end_manhole_external_defect_widget = QLabel(), QLineEdit()
         self.end_manhole_external_defect_label.setText('结束井外部缺陷')
-        self.scroll_area_form.addRow(self.end_manhole_external_defect_label,
-                                     self.end_manhole_external_defect_widget)
-        self.end_manhole_longitude_label, self.end_manhole_longitude_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_external_defect_label,
+                                                self.end_manhole_external_defect_widget)
+        self.end_manhole_longitude_label, self.end_manhole_longitude_widget = QLabel(), QDoubleSpinBox()
         self.end_manhole_longitude_label.setText('结束井经度坐标')
-        self.scroll_area_form.addRow(self.end_manhole_longitude_label, self.end_manhole_longitude_widget)
-        self.end_manhole_latitude_label, self.end_manhole_latitude_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_longitude_label, self.end_manhole_longitude_widget)
+        self.end_manhole_latitude_label, self.end_manhole_latitude_widget = QLabel(), QDoubleSpinBox()
         self.end_manhole_latitude_label.setText('结束井纬度坐标')
-        self.scroll_area_form.addRow(self.end_manhole_latitude_label, self.end_manhole_latitude_widget)
-        self.end_manhole_pipe_elevation_label, self.end_manhole_pipe_elevation_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_latitude_label, self.end_manhole_latitude_widget)
+        self.end_manhole_pipe_elevation_label, self.end_manhole_pipe_elevation_widget = QLabel(), QDoubleSpinBox()
         self.end_manhole_pipe_elevation_label.setText('结束井高程')
-        self.scroll_area_form.addRow(self.end_manhole_pipe_elevation_label, self.end_manhole_pipe_elevation_widget)
+        self.edit_video_scroll_area_form.addRow(self.end_manhole_pipe_elevation_label,
+                                                self.end_manhole_pipe_elevation_widget)
         self.pipe_type_label, self.pipe_type_widget = QLabel(), QComboBox()
         self.pipe_type_label.setText('管道类型')
-        self.scroll_area_form.addRow(self.pipe_type_label, self.pipe_type_widget)
+        self.edit_video_scroll_area_form.addRow(self.pipe_type_label, self.pipe_type_widget)
         self.section_shape_label, self.section_shape_widget = QLabel(), QLineEdit()
         self.section_shape_label.setText('截面形状')
-        self.scroll_area_form.addRow(self.section_shape_label, self.section_shape_widget)
+        self.edit_video_scroll_area_form.addRow(self.section_shape_label, self.section_shape_widget)
         self.joint_form_label, self.joint_form_widget = QLabel(), QLineEdit()
         self.joint_form_label.setText('接口形式')
-        self.scroll_area_form.addRow(self.joint_form_label, self.joint_form_widget)
+        self.edit_video_scroll_area_form.addRow(self.joint_form_label, self.joint_form_widget)
         self.pipe_material_label, self.pipe_material_widget = QLabel(), QComboBox()
         self.pipe_material_label.setText('管道材质')
-        self.scroll_area_form.addRow(self.pipe_material_label, self.pipe_material_widget)
-        self.pipe_diameter_label, self.pipe_diameter_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.pipe_material_label, self.pipe_material_widget)
+        self.pipe_diameter_label, self.pipe_diameter_widget = QLabel(), QDoubleSpinBox()
         self.pipe_diameter_label.setText('管道直径(mm)')
-        self.scroll_area_form.addRow(self.pipe_diameter_label, self.pipe_diameter_widget)
-        self.start_pipe_depth_label, self.start_pipe_depth_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.pipe_diameter_label, self.pipe_diameter_widget)
+        self.start_pipe_depth_label, self.start_pipe_depth_widget = QLabel(), QDoubleSpinBox()
         self.start_pipe_depth_label.setText('起点埋深(m)')
-        self.scroll_area_form.addRow(self.start_pipe_depth_label, self.start_pipe_depth_widget)
-        self.end_pipe_depth_label, self.end_pipe_depth_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.start_pipe_depth_label, self.start_pipe_depth_widget)
+        self.end_pipe_depth_label, self.end_pipe_depth_widget = QLabel(), QDoubleSpinBox()
         self.end_pipe_depth_label.setText('终点埋深(m)')
-        self.scroll_area_form.addRow(self.end_pipe_depth_label, self.end_pipe_depth_widget)
-        self.pipe_length_label, self.pipe_length_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.end_pipe_depth_label, self.end_pipe_depth_widget)
+        self.pipe_length_label, self.pipe_length_widget = QLabel(), QDoubleSpinBox()
         self.pipe_length_label.setText('管道长度(m)')
-        self.scroll_area_form.addRow(self.pipe_length_label, self.pipe_length_widget)
-        self.detection_length_label, self.detection_length_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.pipe_length_label, self.pipe_length_widget)
+        self.detection_length_label, self.detection_length_widget = QLabel(), QDoubleSpinBox()
         self.detection_length_label.setText('检测长度(m)')
-        self.scroll_area_form.addRow(self.detection_length_label, self.detection_length_widget)
+        self.edit_video_scroll_area_form.addRow(self.detection_length_label, self.detection_length_widget)
         self.detection_direction_label, self.detection_direction_widget = QLabel(), QComboBox()
         self.detection_direction_label.setText('检测方向')
-        self.scroll_area_form.addRow(self.detection_direction_label, self.detection_direction_widget)
+        self.edit_video_scroll_area_form.addRow(self.detection_direction_label, self.detection_direction_widget)
         self.construction_year_label, self.construction_year_widget = QLabel(), QDateEdit()
         self.construction_year_label.setText('铺设年代')
         self.construction_year_widget.setDate(QDate.currentDate())
         self.construction_year_widget.setCalendarPopup(True)
-        self.scroll_area_form.addRow(self.construction_year_label, self.construction_year_widget)
+        self.edit_video_scroll_area_form.addRow(self.construction_year_label, self.construction_year_widget)
         self.regional_importance_label, self.regional_importance_widget = QLabel(), QComboBox()
         self.regional_importance_label.setText('地区重要性')
-        self.scroll_area_form.addRow(self.regional_importance_label, self.regional_importance_widget)
+        self.edit_video_scroll_area_form.addRow(self.regional_importance_label, self.regional_importance_widget)
         self.soil_label, self.soil_widget = QLabel(), QComboBox()
         self.soil_label.setText('土质影响')
-        self.scroll_area_form.addRow(self.soil_label, self.soil_widget)
-        self.video_remark_label, self.video_remark_widget = QLabel(), QLineEdit()
+        self.edit_video_scroll_area_form.addRow(self.soil_label, self.soil_widget)
+        self.video_remark_label, self.video_remark_widget = QLabel(), QTextEdit()
         self.video_remark_label.setText('备注信息')
-        self.scroll_area_form.addRow(self.video_remark_label, self.video_name_widget)
+        self.video_remark_widget.setFixedWidth(190)
+        self.edit_video_scroll_area_form.addRow(self.video_remark_label, self.video_remark_widget)
 
-        self.scroll_area_widget.setLayout(self.scroll_area_form)
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidget(self.scroll_area_widget)
-        self.right_layout.addWidget(self.scroll_area, 2, 0, 20, 3)
+        """
+        all of the labels and widgets in edit_defect.
+        """
+        self.defect_type_label, self.defect_type_widget = QLabel(), QComboBox()
+        self.defect_type_label.setText('缺陷类别')
+        self.edit_defect_scroll_area_form.addRow(self.defect_type_label, self.defect_type_widget)
+        self.defect_attribute_label, self.defect_attribute_widget = QLabel(), QLineEdit()
+        self.defect_attribute_label.setText('缺陷性质')
+        self.edit_defect_scroll_area_form.addRow(self.defect_attribute_label, self.defect_attribute_widget)
+        self.defect_grade_label, self.defect_grade_widget = QLabel(), QComboBox()
+        self.defect_grade_label.setText('缺陷级别')
+        self.edit_defect_scroll_area_form.addRow(self.defect_grade_label, self.defect_grade_widget)
+        self.defect_distance_label, self.defect_distance_widget = QLabel(), QDoubleSpinBox()
+        self.defect_distance_label.setText('缺陷距离(m)')
+        self.edit_defect_scroll_area_form.addRow(self.defect_distance_label, self.defect_distance_widget)
+        self.defect_length_label, self.defect_length_widget = QLabel(), QDoubleSpinBox()
+        self.defect_length_label.setText('缺陷长度(m)')
+        self.edit_defect_scroll_area_form.addRow(self.defect_length_label, self.defect_length_widget)
+        self.clock_start_label, self.clock_start_widget = QLabel(), QSpinBox()
+        self.clock_start_label.setText('环向起点')
+        self.edit_defect_scroll_area_form.addRow(self.clock_start_label, self.clock_start_widget)
+        self.clock_end_label, self.clock_end_widget = QLabel(), QSpinBox()
+        self.clock_end_label.setText('环向终点')
+        self.edit_defect_scroll_area_form.addRow(self.clock_end_label, self.clock_end_widget)
+        self.defect_date_label, self.defect_date_widget = QLabel(), QDateEdit()
+        self.defect_date_label.setText('判读日期')
+        self.edit_defect_scroll_area_form.addRow(self.defect_date_label, self.defect_date_widget)
+        self.defect_remark_label, self.defect_remark_widget = QLabel(), QTextEdit()
+        self.defect_remark_label.setText('备注信息')
+        self.defect_remark_widget.setFixedWidth(235)
+        self.edit_defect_scroll_area_form.addRow(self.defect_remark_label, self.defect_remark_widget)
+        """
+        all of the labels and widgets in project_detailed.
+        """
+        self.project_detailed_scroll_area_form.addRow(QLabel("fuck"), QLineEdit())
+
+        self.edit_video_scroll_area_widget.setLayout(self.edit_video_scroll_area_form)
+        self.edit_defect_scroll_area_widget.setLayout(self.edit_defect_scroll_area_form)
+        self.project_detailed_scroll_area_widget.setLayout(self.project_detailed_scroll_area_form)
+        self.edit_video_scroll_area = QScrollArea()
+        self.edit_defect_scroll_area = QScrollArea()
+        self.project_detailed_scroll_area = QScrollArea()
+        self.edit_video_scroll_area.setWidget(self.edit_video_scroll_area_widget)
+        self.edit_defect_scroll_area.setWidget(self.edit_defect_scroll_area_widget)
+        self.project_detailed_scroll_area.setWidget(self.project_detailed_scroll_area_widget)
+        self.right_layout.addWidget(self.edit_video_scroll_area, 2, 0, 20, 3)
+        self.right_layout.addWidget(self.edit_defect_scroll_area, 2, 0, 20, 3)
+        self.right_layout.addWidget(self.project_detailed_scroll_area, 2, 0, 20, 3)
 
         self.set_three_buttons_style()
-        self.set_labels_and_widgets_style()
         self.hide_something()
 
     def save(self):
@@ -282,9 +351,30 @@ class Edit(QMainWindow):
         if self.mode == self.is_show_project_info:
             self.save_button.setVisible(False)
             self.cancel_button.setVisible(False)
-        else:
+            self.edit_video_scroll_area.setVisible(False)
+            self.edit_defect_scroll_area.setVisible(False)
+            self.project_detailed_scroll_area.setVisible(True)
+            self.show_edit_video_labels_and_widgets_style(False)
+            self.show_edit_defect_labels_and_widgets_style(False)
+            self.show_project_detailed_labels_and_widgets_style(True)
+        elif self.mode == self.is_edit_video:
             self.save_button.setVisible(True)
             self.cancel_button.setVisible(True)
+            self.edit_video_scroll_area.setVisible(True)
+            self.edit_defect_scroll_area.setVisible(False)
+            self.project_detailed_scroll_area.setVisible(False)
+            self.show_edit_video_labels_and_widgets_style(True)
+            self.show_edit_defect_labels_and_widgets_style(False)
+            self.show_project_detailed_labels_and_widgets_style(False)
+        elif self.mode == self.is_edit_defect:
+            self.save_button.setVisible(True)
+            self.cancel_button.setVisible(True)
+            self.edit_video_scroll_area.setVisible(False)
+            self.edit_defect_scroll_area.setVisible(True)
+            self.project_detailed_scroll_area.setVisible(False)
+            self.show_edit_video_labels_and_widgets_style(False)
+            self.show_edit_defect_labels_and_widgets_style(True)
+            self.show_project_detailed_labels_and_widgets_style(False)
 
     def edit_video_button_clicked(self):
         self.mode = self.is_edit_video
@@ -382,6 +472,99 @@ class Edit(QMainWindow):
                     }
             ''')
 
-    # set all the labels and widgets' style in right layout.
-    def set_labels_and_widgets_style(self):
+    # set all the labels and widgets' style in edit_video.
+    def set_edit_video_labels_and_widgets_style(self):
+        pass
+
+    # set all the labels and widgets' style in edit_defect.
+    def set_edit_defect_labels_and_widgets_style(self):
+        pass
+
+    # set all the labels and widgets' style in project_detailed.
+    def set_project_detailed_labels_and_widgets_style(self):
+        pass
+
+    # set all the labels and widgets' visibility in edit_video.
+    def show_edit_video_labels_and_widgets_style(self, flag):
+        self.video_name_label.setVisible(flag)
+        self.video_name_widget.setVisible(flag)
+        self.staff_label.setVisible(flag)
+        self.staff_widget.setVisible(flag)
+        self.record_date_label.setVisible(flag)
+        self.record_date_widget.setVisible(flag)
+        self.import_date_label.setVisible(flag)
+        self.import_date_widget.setVisible(flag)
+        self.road_name_label.setVisible(flag)
+        self.road_name_widget.setVisible(flag)
+        self.start_manhole_no_label.setVisible(flag)
+        self.start_manhole_no_widget.setVisible(flag)
+        self.start_manhole_type_label.setVisible(flag)
+        self.start_manhole_type_widget.setVisible(flag)
+        self.start_manhole_material_label.setVisible(flag)
+        self.start_manhole_material_widget.setVisible(flag)
+        self.start_manhole_cover_label.setVisible(flag)
+        self.start_manhole_cover_widget.setVisible(flag)
+        self.start_manhole_internal_defect_label.setVisible(flag)
+        self.start_manhole_internal_defect_widget.setVisible(flag)
+        self.start_manhole_external_defect_label.setVisible(flag)
+        self.start_manhole_external_defect_widget.setVisible(flag)
+        self.start_manhole_longitude_label.setVisible(flag)
+        self.start_manhole_longitude_widget.setVisible(flag)
+        self.start_manhole_latitude_label.setVisible(flag)
+        self.start_manhole_latitude_widget.setVisible(flag)
+        self.start_manhole_pipe_elevation_label.setVisible(flag)
+        self.start_manhole_pipe_elevation_widget.setVisible(flag)
+        self.end_manhole_no_label.setVisible(flag)
+        self.end_manhole_no_widget.setVisible(flag)
+        self.end_manhole_type_label.setVisible(flag)
+        self.end_manhole_type_widget.setVisible(flag)
+        self.end_manhole_material_label.setVisible(flag)
+        self.end_manhole_material_widget.setVisible(flag)
+        self.end_manhole_cover_label.setVisible(flag)
+        self.end_manhole_cover_widget.setVisible(flag)
+        self.end_manhole_internal_defect_label.setVisible(flag)
+        self.end_manhole_internal_defect_widget.setVisible(flag)
+        self.end_manhole_external_defect_label.setVisible(flag)
+        self.end_manhole_external_defect_widget.setVisible(flag)
+        self.end_manhole_longitude_label.setVisible(flag)
+        self.end_manhole_longitude_widget.setVisible(flag)
+        self.end_manhole_latitude_label.setVisible(flag)
+        self.end_manhole_latitude_widget.setVisible(flag)
+        self.end_manhole_pipe_elevation_label.setVisible(flag)
+        self.end_manhole_pipe_elevation_widget.setVisible(flag)
+        self.pipe_type_label.setVisible(flag)
+        self.pipe_type_widget.setVisible(flag)
+        self.section_shape_label.setVisible(flag)
+        self.section_shape_widget.setVisible(flag)
+        self.joint_form_label.setVisible(flag)
+        self.joint_form_widget.setVisible(flag)
+        self.pipe_material_label.setVisible(flag)
+        self.pipe_material_widget.setVisible(flag)
+        self.pipe_diameter_label.setVisible(flag)
+        self.pipe_diameter_widget.setVisible(flag)
+        self.start_pipe_depth_label.setVisible(flag)
+        self.start_pipe_depth_widget.setVisible(flag)
+        self.end_pipe_depth_label.setVisible(flag)
+        self.end_pipe_depth_widget.setVisible(flag)
+        self.pipe_length_label.setVisible(flag)
+        self.pipe_length_widget.setVisible(flag)
+        self.detection_length_label.setVisible(flag)
+        self.detection_length_widget.setVisible(flag)
+        self.detection_direction_label.setVisible(flag)
+        self.detection_direction_widget.setVisible(flag)
+        self.construction_year_label.setVisible(flag)
+        self.construction_year_widget.setVisible(flag)
+        self.regional_importance_label.setVisible(flag)
+        self.regional_importance_widget.setVisible(flag)
+        self.soil_label.setVisible(flag)
+        self.soil_widget.setVisible(flag)
+        self.video_remark_label.setVisible(flag)
+        self.video_remark_widget.setVisible(flag)
+
+    # set all the labels and widgets' visibility in edit_defect.
+    def show_edit_defect_labels_and_widgets_style(self, flag):
+        pass
+
+    # set all the labels and widgets' visibility in project_detailed.
+    def show_project_detailed_labels_and_widgets_style(self, flag):
         pass
