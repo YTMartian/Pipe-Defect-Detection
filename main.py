@@ -712,8 +712,6 @@ class MainWindow(QMainWindow):
             return
         # get current selected row number, start from 0.
         current_row_number = self.show_table.currentRow()
-        if current_row_number == -1:  # didn't select any row.
-            return
         context_menu = QMenu(self)
         context_menu.setStyleSheet('''
             QMenu{
@@ -726,16 +724,23 @@ class MainWindow(QMainWindow):
             }
         ''')
         if self.management_flag == self.project_management_flag:
-            video_management = context_menu.addAction("视频管理")
+            video_management = ''
             add_project = ''
             edit_project = ''
+            delete_project = ''
+            generate_document = ''
+            add_video = ''
+            if current_row_number != -1:  # if select one row.
+                video_management = context_menu.addAction("视频管理")
             # can only do these in detailed project view.
             if self.toggle_project_detailed_view.isChecked():
                 add_project = context_menu.addAction("添加工程")
-                edit_project = context_menu.addAction("编辑工程")
-            delete_project = context_menu.addAction("删除工程")
-            generate_document = context_menu.addAction("生成报告")
-            add_video = context_menu.addAction("添加视频")
+                if current_row_number != -1:  # if select one row.
+                    edit_project = context_menu.addAction("编辑工程")
+            if current_row_number != -1:  # if select one row.
+                delete_project = context_menu.addAction("删除工程")
+                generate_document = context_menu.addAction("生成报告")
+                add_video = context_menu.addAction("添加视频")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == video_management:
                 self.management_flag = self.video_management_flag
@@ -753,10 +758,15 @@ class MainWindow(QMainWindow):
             elif action == add_video:
                 self.add_video(self.data[current_row_number][0])
         elif self.management_flag == self.video_management_flag:
-            defect_management = context_menu.addAction("缺陷管理")
-            add_defect = context_menu.addAction("添加缺陷")
-            edit_video = context_menu.addAction("检测信息")
-            delete_video = context_menu.addAction("删除视频")
+            defect_management = ''
+            add_defect = ''
+            edit_video = ''
+            delete_video = ''
+            if current_row_number != -1:  # if select one row.
+                defect_management = context_menu.addAction("缺陷管理")
+                add_defect = context_menu.addAction("添加缺陷")
+                edit_video = context_menu.addAction("检测信息")
+                delete_video = context_menu.addAction("删除视频")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == defect_management:
                 self.management_flag = self.defect_management_flag
@@ -773,8 +783,11 @@ class MainWindow(QMainWindow):
                 edit = Edit(self.db, self.is_edit_defect, video_id=self.data[current_row_number][0], main_window=self)
                 edit.show()
         elif self.management_flag == self.defect_management_flag:
-            edit_defect = context_menu.addAction("编辑缺陷")
-            delete_defect = context_menu.addAction("删除缺陷")
+            edit_defect = ''
+            delete_defect = ''
+            if current_row_number != -1:  # if select one row.
+                edit_defect = context_menu.addAction("编辑缺陷")
+                delete_defect = context_menu.addAction("删除缺陷")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
             if action == edit_defect:
                 edit = Edit(self.db, self.is_edit_defect, defect_id=self.data[current_row_number][0], main_window=self)

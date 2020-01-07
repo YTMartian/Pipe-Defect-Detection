@@ -103,7 +103,7 @@ class Database:
                 "SELECT COUNT(*) FROM  defect WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {}) ".format(
                     project_id))
             temp.append(str(standard_sum))
-            defect_sum = standard_sum  # maybe they are the same thing?
+            defect_sum = standard_sum  # maybe they are the same things?
             temp.append(str(defect_sum))
             res.append(temp.copy())
         return res
@@ -112,10 +112,10 @@ class Database:
         cursor = self.conn.cursor()
         if project_id is None:
             cursor.execute(
-                "SELECT video_id,road_name,start_manhole_no,end_manhole_no,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video")
+                "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video")
         else:
             cursor.execute(
-                "SELECT video_id,road_name,start_manhole_no,end_manhole_no,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
+                "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
                     project_id))
         self.conn.commit()
         data = cursor.fetchall()
@@ -126,7 +126,11 @@ class Database:
             print(len(i))
             temp.append(str(i[0]))  # video_id.
             temp.append(str(i[1]))  # road_name.
-            temp.append(str(i[2]) + ' ~ ' + str(i[3]))  # pipe number.
+            start_manhole_id = str(i[2])
+            end_manhole_id = str(i[3])
+            start_manhole_no = self.get_name('manhole', start_manhole_id)
+            end_manhole_no = self.get_name('manhole', end_manhole_id)
+            temp.append(str(start_manhole_no) + '~' + str(end_manhole_no))  # pipe number.
             temp.append(str(i[4]))  # pipe_type_id.
             temp.append(str(i[5]))  # pipe_material_id.
             temp.append(str(i[6]))  # video_name.
@@ -252,6 +256,19 @@ class Database:
         except:
             print('import video failed.')
             return
+        # should add start and end manholes to manhole table.
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute('INSERT INTO manhole VALUES()')
+            start_manhole_id = cursor.lastrowid  # get the latest manhole id.
+            cursor.execute('INSERT INTO manhole VALUES()')
+            end_manhole_id = cursor.lastrowid
+            self.conn.commit()
+            cursor.close()
+            print('insert into manhole successful.')
+        except:
+            print('insert into manhole failed.')
+
         record_date = time.localtime(record_date)
         record_date = time.strftime("%Y-%m-%d %H:%M:%S", record_date)
         import_date = time.time()
@@ -260,9 +277,10 @@ class Database:
         try:
             cursor = self.conn.cursor()
             cursor.execute(
-                "INSERT INTO video(record_date,import_date,video_name) VALUES('{}','{}','{}')".format(record_date,
-                                                                                                      import_date,
-                                                                                                      video_name))
+                "INSERT INTO video(record_date,import_date,video_name,start_manhole_id,end_manhole_id) VALUES('{}','{}','{}',{},{})".format(
+                    record_date,
+                    import_date,
+                    video_name, start_manhole_id, end_manhole_id))
             self.conn.commit()
             video_id = cursor.lastrowid  # get latest id.
             cursor.execute("INSERT INTO project_video VALUES({},{})".format(project_id, video_id))
@@ -275,6 +293,14 @@ class Database:
     def delete_video(self, video_id):
         try:
             cursor = self.conn.cursor()
+            cursor.execute("SELECT start_manhole_id,end_manhole_id FROM video WHERE video_id={}".format(video_id))
+            self.conn.commit()
+            data = cursor.fetchall()
+            start_manhole_id = data[0][0]
+            end_manhole_id = data[0][1]
+            cursor.execute(
+                "DELETE FROM manhole WHERE manhole_id={} OR manhole_id={}".format(start_manhole_id, end_manhole_id))
+            self.conn.commit()
             cursor.execute("DELETE FROM video WHERE video_id={}".format(video_id))
             self.conn.commit()
             cursor.close()

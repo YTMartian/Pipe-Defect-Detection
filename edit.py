@@ -171,14 +171,17 @@ class Edit(QMainWindow):
     def edit_video_button_clicked(self):
         self.mode = self.is_edit_video
         self.set_three_buttons_style()
+        self.hide_something()
 
     def edit_defect_button_clicked(self):
         self.mode = self.is_edit_defect
         self.set_three_buttons_style()
+        self.hide_something()
 
     def project_detailed_button_clicked(self):
         self.mode = self.is_show_project_info
         self.set_three_buttons_style()
+        self.hide_something()
 
     # set edit_video_button,edit_defect_button and project_detailed_button's style.
     def set_three_buttons_style(self):
