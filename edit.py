@@ -129,17 +129,16 @@ class Edit(QMainWindow):
         self.scroll_area_widget.setStyleSheet('''
             QWidget{
                 color:#232323;
-                font-size:16px;
-                font-family:"Microsoft YaHei";
+                font-size:18px;
+                font-weight:bold;
+                font-family:"DengXian";
             }
         ''')
         self.setCentralWidget(self.main_widget)
         self.scroll_area_form = QFormLayout()
-        self.labels = [QLabel() for i in range(39)]
-        self.buttons = [QComboBox() for i in range(39)]
-        for i in range(len(self.labels)):
-            self.labels[i].setText("标签" + str(i))
-            self.scroll_area_form.addRow(self.labels[i], self.buttons[i])
+        self.video_name_label, self.video_name_widget = QLabel(), QLineEdit()
+        self.video_name_label.setText('视频文件名')
+        self.scroll_area_form.addRow(self.video_name_label, self.video_name_widget)
         self.scroll_area_widget.setLayout(self.scroll_area_form)
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidget(self.scroll_area_widget)

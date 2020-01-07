@@ -87,22 +87,45 @@ class Database:
             staff_id = temp[4]
             project_id = str(i[0])
             temp[4] = self.get_name('staff', staff_id)
+            # get video amount.
             video_amount = self.get_value("SELECT COUNT(*) FROM project_video WHERE project_id={}".format(project_id))
             temp.append(str(video_amount))
-            pipe_amount = self.get_value(
-                "SELECT COUNT(*) FROM  video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {}) AND TRIM(video.start_manhole_no) != '' AND TRIM(video.end_manhole_no) != '' ".format(
-                    project_id))
+            # get pipe amount.
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM project_video WHERE project_id={}".format(project_id))
+            self.conn.commit()
+            data = cursor.fetchall()
+            video_ids = [i[1] for i in data]  # get now project's all video's id.
+            pipe_amount = 0
+            for video_id in video_ids:
+                cursor.execute("SELECT start_manhole_id,end_manhole_id FROM video WHERE video_id={}".format(video_id))
+                self.conn.commit()
+                data = cursor.fetchall()
+                start_manhole_id = data[0][0]
+                end_manhole_id = data[0][1]
+                cursor.execute("SELECT manhole_no FROM manhole WHERE manhole_id in ({},{})".format(start_manhole_id,
+                                                                                                   end_manhole_id))
+                self.conn.commit()
+                data = cursor.fetchall()
+                start_manhole_no = data[0][0]
+                end_manhole_no = data[1][0]
+                if start_manhole_no is None or end_manhole_no is None:
+                    continue
+                pipe_amount += 1
             temp.append(str(pipe_amount))
+            # get pipe total length.
             pipe_total_length = self.get_value(
-                "SELECT SUM(pipe_length) FROM  video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {}) AND TRIM(video.start_manhole_no) != '' AND TRIM(video.end_manhole_no) != ''".format(
+                "SELECT SUM(pipe_length) FROM  video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
                     project_id))
             if pipe_total_length is None:
                 pipe_total_length = 0
             temp.append(str(pipe_total_length))
+            # get standard sum.
             standard_sum = self.get_value(
                 "SELECT COUNT(*) FROM  defect WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {}) ".format(
                     project_id))
             temp.append(str(standard_sum))
+            # get defect sum.
             defect_sum = standard_sum  # maybe they are the same things?
             temp.append(str(defect_sum))
             res.append(temp.copy())
