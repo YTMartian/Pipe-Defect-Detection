@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.edit_project_id = None
         self.is_edit_video = 0
         self.is_edit_defect = 1
-        edit = Edit(self.db, self.is_edit_video, video_id=26, main_window=self)
+        edit = Edit(self.db, self.is_edit_video, video_id=35, main_window=self)
         edit.show()
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
@@ -893,7 +893,8 @@ class MainWindow(QMainWindow):
         self.add_project_widgets.append(QComboBox())  # dredging _method.
         dredging = self.db.get_add_project_tables('dredging')
         self.add_project_tables.append(dredging)
-        for i in drainage:
+        # once there is a BUG, I wrote drainage here too...
+        for i in dredging:
             self.add_project_widgets[15].addItem(i[1])
         self.show_table.setCellWidget(row, 15, self.add_project_widgets[15])
         # set all of the combo boxes' style.
@@ -917,7 +918,7 @@ class MainWindow(QMainWindow):
             self.add_project_widgets[4].setDate(datetime.datetime.strptime(data[5], "%Y-%m-%d"))
             for i in range(5, 11):
                 self.add_project_widgets[i].setText(data[i + 1])
-            for i in range(11, 15):
+            for i in range(11, 16):
                 index = 0
                 for j in self.add_project_tables[i - 10]:
                     if j == data[i + 1]:

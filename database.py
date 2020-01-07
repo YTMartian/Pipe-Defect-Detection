@@ -71,8 +71,7 @@ class Database:
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
-        res = []
-        res = [str(data[0][i]) for i in range(0, 16)]
+        res = [str(data[0][i]) for i in range(0, 17)]
         return res
 
     def get_project_statistic(self):
@@ -181,19 +180,25 @@ class Database:
             temp = []
             temp.append(str(i[0]))  # defect_id.
             cursor = self.conn.cursor()
-            cursor.execute("SELECT * FROM video WHERE video_id = {}".format(str(i[1])))
+            cursor.execute(
+                "SELECT road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,pipe_diameter,record_date FROM video WHERE video_id = {}".format(
+                    str(i[1])))
             self.conn.commit()
             video_data = cursor.fetchall()
-            temp.append(str(video_data[0][3]))  # road_name.
-            temp.append(str(video_data[0][4]) + ' ~ ' + str(video_data[0][13]))  # pipe number.
-            temp.append(str(video_data[0][24]))  # pipe_type_id.
-            temp.append(str(video_data[0][27]))  # pipe_material_id.
-            temp.append(str(video_data[0][28]))  # pipe_diameter.
+            temp.append(str(video_data[0][0]))  # road_name.
+            start_manhole_id = str(video_data[0][1])
+            end_manhole_id = str(video_data[0][2])
+            start_manhole_no = self.get_name('manhole', start_manhole_id)
+            end_manhole_no = self.get_name('manhole', end_manhole_id)
+            temp.append(str(start_manhole_no) + '~' + str(end_manhole_no))  # pipe number.
+            temp.append(str(video_data[0][3]))  # pipe_type_id.
+            temp.append(str(video_data[0][4]))  # pipe_material_id.
+            temp.append(str(video_data[0][5]))  # pipe_diameter.
             temp.append(str(i[3]))  # defect_type_id.
             temp.append(str(i[8]))  # defect_grade_id.
             temp.append(str(i[11]))  # defect_attribute.
             temp.append(str(i[2]))  # time_in_video.
-            temp.append(str(video_data[0][2]))  # record_date.
+            temp.append(str(video_data[0][6]))  # record_date.
             temp.append(str(i[10]))  # interpretation_date.
 
             temp[3] = self.get_name('pipe_type', temp[3])
@@ -333,3 +338,52 @@ class Database:
 
     def update_video(self, video_id, data):
         pass
+
+    def get_project_by_video_id(self, video_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT project_id FROM project_video WHERE video_id={}".format(video_id))
+            data = cursor.fetchall()
+            project_id = str(data[0][0])
+            res = self.get_one_project_detailed(project_id=project_id)
+            staff_id = res[4]
+            detection_id = res[12]
+            move_id = res[13]
+            plugging_id = res[14]
+            drainage_id = res[15]
+            dredging_id = res[16]
+            cursor.execute("SELECT staff_name FROM staff WHERE staff_id={}".format(staff_id))
+            data = cursor.fetchall()
+            res[4] = data[0][0]
+            cursor.execute("SELECT detection_method FROM detection WHERE detection_id={}".format(detection_id))
+            data=cursor.fetchall()
+            res[12]=data[0][0]
+            cursor.execute("SELECT move_method FROM move WHERE move_id={}".format(move_id))
+            data = cursor.fetchall()
+            res[13] = data[0][0]
+            cursor.execute("SELECT plugging_method FROM plugging WHERE plugging_id={}".format(plugging_id))
+            data = cursor.fetchall()
+            res[14] = data[0][0]
+            cursor.execute("SELECT drainage_method FROM drainage WHERE drainage_id={}".format(drainage_id))
+            data = cursor.fetchall()
+            res[15] = data[0][0]
+            cursor.execute("SELECT dredging_method FROM dredging WHERE dredging_id={}".format(dredging_id))
+            data = cursor.fetchall()
+            res[16] = data[0][0]
+            self.conn.commit()
+            return res
+        except:
+            print('get project by video_id failed.')
+            return None
+
+    def get_project_by_defect_id(self, defect_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT video_id FROM defect WHERE defect_id={}".format(defect_id))
+            data = cursor.fetchall()
+            self.conn.commit()
+            video_id = str(data[0][0])
+            return self.get_project_by_video_id(video_id=video_id)
+        except:
+            print('get video_id by defect_id failed.')
+            return None
