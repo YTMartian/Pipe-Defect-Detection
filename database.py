@@ -210,7 +210,8 @@ class Database:
         return res
 
     # get id and name of staff,detection,move,plugging,drainage,dredging.
-    def get_add_project_tables(self, table):
+    # also tables in video.
+    def get_one_table(self, table):
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM {}".format(table))
         self.conn.commit()
@@ -356,8 +357,8 @@ class Database:
             data = cursor.fetchall()
             res[4] = data[0][0]
             cursor.execute("SELECT detection_method FROM detection WHERE detection_id={}".format(detection_id))
-            data=cursor.fetchall()
-            res[12]=data[0][0]
+            data = cursor.fetchall()
+            res[12] = data[0][0]
             cursor.execute("SELECT move_method FROM move WHERE move_id={}".format(move_id))
             data = cursor.fetchall()
             res[13] = data[0][0]
@@ -387,3 +388,71 @@ class Database:
         except:
             print('get video_id by defect_id failed.')
             return None
+
+    def get_video_by_video_id(self, video_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM video WHERE video_id={}".format(video_id))
+            data = cursor.fetchall()
+            res = {}
+            res['staff_id'] = data[0][1]
+            res['record_date'] = str(data[0][2])
+            res['road_name'] = data[0][3]
+            res['start_manhole_id'] = data[0][4]
+            res['end_manhole_id'] = data[0][5]
+            res['pipe_type_id'] = data[0][6]
+            res['section_shape_id'] = data[0][7]
+            res['joint_form_id'] = data[0][8]
+            res['pipe_material_id'] = data[0][9]
+            res['pipe_diameter'] = data[0][10]
+            res['start_pipe_depth'] = data[0][11]
+            res['end_pipe_depth'] = data[0][12]
+            res['pipe_length'] = data[0][13]
+            res['detection_length'] = data[0][14]
+            res['detection_direction'] = data[0][15]
+            res['construction_year'] = str(data[0][16])
+            res['regional_importance_id'] = data[0][17]
+            res['soil_id'] = data[0][18]
+            res['video_remark'] = data[0][19]
+            res['video_name'] = data[0][20]
+            res['import_date'] = str(data[0][21])
+            res['staff'] = self.get_one_table('staff')
+            res['pipe_type'] = self.get_one_table('pipe_type')
+            res['section_shape'] = self.get_one_table('section_shape')
+            res['joint_form'] = self.get_one_table('joint_form')
+            res['pipe_material'] = self.get_one_table('pipe_material')
+            res['regional'] = self.get_one_table('regional')
+            res['soil'] = self.get_one_table('soil')
+            cursor.execute("SELECT * FROM manhole WHERE manhole_id={}".format(res['start_manhole_id']))
+            data = cursor.fetchall()
+            res['start_manhole_no'] = data[0][1]
+            res['start_manhole_type_id'] = data[0][2]
+            res['start_manhole_material _id'] = data[0][3]
+            res['start_manhole_cover_id'] = data[0][4]
+            res['start_manhole_construction_year'] = str(data[0][5])
+            res['start_manhole_longitude'] = data[0][6]
+            res['start_manhole_latitude'] = data[0][7]
+            res['start_internal_defect'] = data[0][8]
+            res['start_external_defect'] = data[0][9]
+            res['start_pipe_invert'] = data[0][10]
+            res['start_pipe_elevation'] = data[0][11]
+            cursor.execute("SELECT * FROM manhole WHERE manhole_id={}".format(res['end_manhole_id']))
+            data = cursor.fetchall()
+            res['end_manhole_no'] = data[0][1]
+            res['end_manhole_type_id'] = data[0][2]
+            res['end_manhole_material _id'] = data[0][3]
+            res['end_manhole_cover_id'] = data[0][4]
+            res['end_manhole_construction_year'] = str(data[0][5])
+            res['end_manhole_longitude'] = data[0][6]
+            res['end_manhole_latitude'] = data[0][7]
+            res['end_internal_defect'] = data[0][8]
+            res['end_external_defect'] = data[0][9]
+            res['end_pipe_invert'] = data[0][10]
+            res['end_pipe_elevation'] = data[0][11]
+            return res
+        except:
+            print('get video by video_id failed.')
+            return None
+
+    def get_video_by_defect_id(self, defect_id):
+        pass

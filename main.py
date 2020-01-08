@@ -713,14 +713,19 @@ class MainWindow(QMainWindow):
         # get current selected row number, start from 0.
         current_row_number = self.show_table.currentRow()
         context_menu = QMenu(self)
+        context_menu.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         context_menu.setStyleSheet('''
             QMenu{
                 background:rgba(20,20,20,0.8);
                 font-weight:bold;
                 font-size:17px;
+                color:#d6d6d6;
                 padding-top:10px;
                 border-radius:30px;
                 font-family:"Microsoft YaHei";
+            }
+            QMenu::item::selected{
+                color:#f1f1f1;
             }
         ''')
         if self.management_flag == self.project_management_flag:
@@ -834,7 +839,7 @@ class MainWindow(QMainWindow):
         self.add_project_widgets[2].setPlaceholderText('工程地址...')
         self.show_table.setCellWidget(row, 2, self.add_project_widgets[2])
         self.add_project_widgets.append(QComboBox())  # staff_name.
-        staff = self.db.get_add_project_tables('staff')
+        staff = self.db.get_one_table('staff')
         self.add_project_tables.append(staff)
         for i in staff:
             self.add_project_widgets[3].addItem(i[1])
@@ -867,31 +872,31 @@ class MainWindow(QMainWindow):
         self.add_project_widgets[10].setPlaceholderText('监理单位...')
         self.show_table.setCellWidget(row, 10, self.add_project_widgets[10])
         self.add_project_widgets.append(QComboBox())  # detection_method.
-        detection = self.db.get_add_project_tables('detection')
+        detection = self.db.get_one_table('detection')
         self.add_project_tables.append(detection)
         for i in detection:
             self.add_project_widgets[11].addItem(i[1])
         self.show_table.setCellWidget(row, 11, self.add_project_widgets[11])
         self.add_project_widgets.append(QComboBox())  # move_method.
-        move = self.db.get_add_project_tables('move')
+        move = self.db.get_one_table('move')
         self.add_project_tables.append(move)
         for i in move:
             self.add_project_widgets[12].addItem(i[1])
         self.show_table.setCellWidget(row, 12, self.add_project_widgets[12])
         self.add_project_widgets.append(QComboBox())  # plugging_method.
-        plugging = self.db.get_add_project_tables('plugging')
+        plugging = self.db.get_one_table('plugging')
         self.add_project_tables.append(plugging)
         for i in plugging:
             self.add_project_widgets[13].addItem(i[1])
         self.show_table.setCellWidget(row, 13, self.add_project_widgets[13])
         self.add_project_widgets.append(QComboBox())  # drainage_method.
-        drainage = self.db.get_add_project_tables('drainage')
+        drainage = self.db.get_one_table('drainage')
         self.add_project_tables.append(drainage)
         for i in drainage:
             self.add_project_widgets[14].addItem(i[1])
         self.show_table.setCellWidget(row, 14, self.add_project_widgets[14])
         self.add_project_widgets.append(QComboBox())  # dredging _method.
-        dredging = self.db.get_add_project_tables('dredging')
+        dredging = self.db.get_one_table('dredging')
         self.add_project_tables.append(dredging)
         # once there is a BUG, I wrote drainage here too...
         for i in dredging:

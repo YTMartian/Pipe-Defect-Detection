@@ -170,9 +170,11 @@ class Edit(QMainWindow):
         self.edit_video_scroll_area_form.addRow(self.staff_label, self.staff_widget)
         self.record_date_label, self.record_date_widget = QLabel(), QLineEdit()
         self.record_date_label.setText('检测日期')
+        self.record_date_widget.setReadOnly(True)
         self.edit_video_scroll_area_form.addRow(self.record_date_label, self.record_date_widget)
         self.import_date_label, self.import_date_widget = QLabel(), QLineEdit()
         self.import_date_label.setText('导入日期')
+        self.import_date_widget.setReadOnly(True)
         self.edit_video_scroll_area_form.addRow(self.import_date_label, self.import_date_widget)
         self.road_name_label, self.road_name_widget = QLabel(), QLineEdit()
         self.road_name_label.setText('道路名称')
@@ -199,9 +201,13 @@ class Edit(QMainWindow):
                                                 self.start_manhole_external_defect_widget)
         self.start_manhole_longitude_label, self.start_manhole_longitude_widget = QLabel(), QDoubleSpinBox()
         self.start_manhole_longitude_label.setText('起始井经度坐标')
+        self.start_manhole_longitude_widget.setMaximum(180)  # [-180,180]
+        self.start_manhole_longitude_widget.setMinimum(-180)
         self.edit_video_scroll_area_form.addRow(self.start_manhole_longitude_label, self.start_manhole_longitude_widget)
         self.start_manhole_latitude_label, self.start_manhole_latitude_widget = QLabel(), QDoubleSpinBox()
         self.start_manhole_latitude_label.setText('起始井纬度坐标')
+        self.start_manhole_latitude_widget.setMaximum(90)  # [-90,90]
+        self.start_manhole_latitude_widget.setMinimum(-90)
         self.edit_video_scroll_area_form.addRow(self.start_manhole_latitude_label, self.start_manhole_latitude_widget)
         self.start_manhole_pipe_elevation_label, self.start_manhole_pipe_elevation_widget = QLabel(), QDoubleSpinBox()
         self.start_manhole_pipe_elevation_label.setText('起始井高程')
@@ -229,9 +235,13 @@ class Edit(QMainWindow):
                                                 self.end_manhole_external_defect_widget)
         self.end_manhole_longitude_label, self.end_manhole_longitude_widget = QLabel(), QDoubleSpinBox()
         self.end_manhole_longitude_label.setText('结束井经度坐标')
+        self.end_manhole_longitude_widget.setMaximum(180)  # [-180,180]
+        self.end_manhole_longitude_widget.setMinimum(-180)
         self.edit_video_scroll_area_form.addRow(self.end_manhole_longitude_label, self.end_manhole_longitude_widget)
         self.end_manhole_latitude_label, self.end_manhole_latitude_widget = QLabel(), QDoubleSpinBox()
         self.end_manhole_latitude_label.setText('结束井纬度坐标')
+        self.end_manhole_latitude_widget.setMaximum(90)  # [-180,180]
+        self.end_manhole_latitude_widget.setMinimum(-90)
         self.edit_video_scroll_area_form.addRow(self.end_manhole_latitude_label, self.end_manhole_latitude_widget)
         self.end_manhole_pipe_elevation_label, self.end_manhole_pipe_elevation_widget = QLabel(), QDoubleSpinBox()
         self.end_manhole_pipe_elevation_label.setText('结束井高程')
@@ -297,15 +307,21 @@ class Edit(QMainWindow):
         self.edit_defect_scroll_area_form.addRow(self.defect_grade_label, self.defect_grade_widget)
         self.defect_distance_label, self.defect_distance_widget = QLabel(), QDoubleSpinBox()
         self.defect_distance_label.setText('缺陷距离(m)')
+        self.defect_distance_widget.setMaximum(1 << 30)
         self.edit_defect_scroll_area_form.addRow(self.defect_distance_label, self.defect_distance_widget)
         self.defect_length_label, self.defect_length_widget = QLabel(), QDoubleSpinBox()
         self.defect_length_label.setText('缺陷长度(m)')
+        self.defect_length_widget.setMaximum(1 << 30)
         self.edit_defect_scroll_area_form.addRow(self.defect_length_label, self.defect_length_widget)
         self.clock_start_label, self.clock_start_widget = QLabel(), QSpinBox()
         self.clock_start_label.setText('环向起点')
+        self.clock_start_widget.setMinimum(1)
+        self.clock_start_widget.setMaximum(12)
         self.edit_defect_scroll_area_form.addRow(self.clock_start_label, self.clock_start_widget)
         self.clock_end_label, self.clock_end_widget = QLabel(), QSpinBox()
         self.clock_end_label.setText('环向终点')
+        self.clock_end_widget.setMinimum(1)
+        self.clock_start_widget.setMaximum(12)
         self.edit_defect_scroll_area_form.addRow(self.clock_end_label, self.clock_end_widget)
         self.defect_date_label, self.defect_date_widget = QLabel(), QDateEdit()
         self.defect_date_label.setText('判读日期')
@@ -335,7 +351,7 @@ class Edit(QMainWindow):
         self.project_detailed_scroll_area_form.addRow(self.project_staff_label, self.project_staff_widget)
         self.project_start_date_label, self.project_start_date_widget = QLabel(), QLineEdit()
         self.project_start_date_label.setText('开工日期')
-        self.project_staff_widget.setReadOnly(True)
+        self.project_start_date_widget.setReadOnly(True)
         self.project_detailed_scroll_area_form.addRow(self.project_start_date_label, self.project_start_date_widget)
         self.project_report_no_label, self.project_report_no_widget = QLabel(), QLineEdit()
         self.project_report_no_label.setText('报告编号')
@@ -403,6 +419,7 @@ class Edit(QMainWindow):
         self.set_three_buttons_style()
         self.hide_something()
         self.set_project_info()
+        self.set_video_info()
 
     def save(self):
         if self.mode == self.is_edit_video:
@@ -568,3 +585,22 @@ class Edit(QMainWindow):
         self.project_plugging_widget.setText(data[14])
         self.project_drainage_widget.setText(data[15])
         self.project_dredging_widget.setText(data[16])
+
+    def set_video_info(self):
+        # if no video_id.
+        if self.video_id is None:
+            data = self.main_window.db.get_video_by_defect_id(self.defect_id)
+        else:
+            data = self.main_window.db.get_video_by_video_id(self.video_id)
+        if data is None:
+            return
+        self.video_name_widget.setText(data['video_name'])
+        self.video_name_widget.setToolTip(data['video_name'])
+        for i in data['staff']:
+            self.staff_widget.addItem(i[1])
+        index = 0
+        for i in data['staff']:
+            if i[0] == data['staff_id']:
+                break
+            index += 1
+        print(index)
