@@ -758,6 +758,7 @@ class Edit(QMainWindow):
         self.defect_data = data
         if data is None:
             return
+        self.video_id = data['video_id']
         self.defect_type_widget.clear()
         for i in data['defect_type']:
             self.defect_type_widget.addItem(i[1])
@@ -777,7 +778,50 @@ class Edit(QMainWindow):
         self.defect_remark_widget.setText(data['defect_remark'])
 
     def save_video_info(self):
-        pass
+        data = {}
+        data['video_id'] = self.video_id
+        data['staff_id'] = self.video_data['staff'][self.staff_widget.currentIndex()][0]
+        data['road_name'] = self.road_name_widget.text()
+        data['start_manhole_no'] = self.start_manhole_no_widget.text()
+        data['start_manhole_type_id'] = self.video_data['manhole_type'][self.start_manhole_type_widget.currentIndex()][
+            0]
+        data['start_manhole_material_id'] = \
+            self.video_data['manhole_material'][self.start_manhole_material_widget.currentIndex()][0]
+        data['start_manhole_cover_id'] = \
+            self.video_data['manhole_cover'][self.start_manhole_cover_widget.currentIndex()][0]
+        data['start_internal_defect'] = self.start_manhole_internal_defect_widget.text()
+        data['start_external_defect'] = self.start_manhole_external_defect_widget.text()
+        data['start_manhole_longitude'] = self.start_manhole_longitude_widget.text()
+        data['start_manhole_latitude'] = self.start_manhole_latitude_widget.text()
+        data['start_pipe_elevation'] = self.start_manhole_pipe_elevation_widget.text()
+        data['end_manhole_no'] = self.end_manhole_no_widget.text()
+        data['end_manhole_type_id'] = self.video_data['manhole_type'][self.end_manhole_type_widget.currentIndex()][
+            0]
+        data['end_manhole_material_id'] = \
+            self.video_data['manhole_material'][self.end_manhole_material_widget.currentIndex()][0]
+        data['end_manhole_cover_id'] = self.video_data['manhole_cover'][self.end_manhole_cover_widget.currentIndex()][0]
+        data['end_internal_defect'] = self.end_manhole_internal_defect_widget.text()
+        data['end_external_defect'] = self.end_manhole_external_defect_widget.text()
+        data['end_manhole_longitude'] = self.end_manhole_longitude_widget.text()
+        data['end_manhole_latitude'] = self.end_manhole_latitude_widget.text()
+        data['end_pipe_elevation'] = self.end_manhole_pipe_elevation_widget.text()
+        data['pipe_type_id'] = self.video_data['pipe_type'][self.pipe_type_widget.currentIndex()][0]
+        data['section_shape_id'] = self.video_data['section_shape'][self.section_shape_widget.currentIndex()][0]
+        data['joint_form_id'] = self.video_data['joint_form'][self.joint_form_widget.currentIndex()][0]
+        data['pipe_material_id'] = self.video_data['pipe_material'][self.pipe_material_widget.currentIndex()][0]
+        data['pipe_diameter'] = self.pipe_diameter_widget.text()
+        data['start_pipe_depth'] = self.start_pipe_depth_widget.text()
+        data['end_pipe_depth'] = self.end_pipe_depth_widget.text()
+        data['pipe_length'] = self.pipe_length_widget.text()
+        data['detection_length'] = self.detection_length_widget.text()
+        data['detection_direction'] = self.detection_direction_widget.currentIndex()
+        data['construction_year'] = self.construction_year_widget.text()
+        data['regional_importance_id'] = self.video_data['regional'][self.regional_importance_widget.currentIndex()][0]
+        data['soil_id'] = self.video_data['soil'][self.soil_widget.currentIndex()][0]
+        data['video_remark'] = self.video_remark_widget.toPlainText()
+        flag = self.main_window.db.save_video(data)
+        QtWidgets.QMessageBox.information(self, '提示', '保存成功' if flag else '保存失败')
+        self.set_video_info()
 
     def save_defect_info(self):
         if self.defect_id is None:

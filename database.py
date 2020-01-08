@@ -476,6 +476,7 @@ class Database:
             cursor.execute("SELECT * FROM defect WHERE defect_id={}".format(defect_id))
             data = cursor.fetchall()
             res = {}
+            res['video_id']=data[0][1]
             res['time_in_video'] = data[0][2]
             res['defect_type_id'] = data[0][3]
             res['defect_distance'] = data[0][4] if data[0][4] is not None else 0
@@ -494,3 +495,36 @@ class Database:
         except:
             print('get defect by defect_id failed.')
             return None
+
+    def save_video(self, data):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "SELECT start_manhole_id,end_manhole_id FROM video WHERE video_id={}".format(data['video_id']))
+            temp_data = cursor.fetchall()
+            start_manhole_id = temp_data[0][0]
+            end_manhole_id = temp_data[0][1]
+            sql = "UPDATE manhole set manhole_no='{}',manhole_type_id={},manhole_material_id={},manhole_cover_id={},manhole_longitude={},manhole_latitude={},internal_defect='{}',external_defect='{}',pipe_elevation={} where manhole_id={}".format(
+                data['start_manhole_no'], data['start_manhole_type_id'], data['start_manhole_material_id'],
+                data['start_manhole_cover_id'], data['start_manhole_longitude'], data['start_manhole_latitude'],
+                data['start_internal_defect'], data['start_external_defect'], data['start_pipe_elevation'],
+                start_manhole_id)
+            cursor.execute(sql)
+            sql = "UPDATE manhole SET manhole_no='{}',manhole_type_id={},manhole_material_id={},manhole_cover_id={},manhole_longitude={},manhole_latitude={},internal_defect='{}',external_defect='{}',pipe_elevation={} WHERE manhole_id={}".format(
+                data['end_manhole_no'], data['end_manhole_type_id'], data['end_manhole_material_id'],
+                data['end_manhole_cover_id'], data['end_manhole_longitude'], data['end_manhole_latitude'],
+                data['end_internal_defect'], data['end_external_defect'], data['end_pipe_elevation'],
+                end_manhole_id)
+            cursor.execute(sql)
+            sql = "UPDATE video SET staff_id={},road_name='{}',pipe_type_id={},section_shape_id={},joint_form_id={},pipe_material_id={},pipe_diameter={},start_pipe_depth={},end_pipe_depth={},pipe_length={},detection_length={},detection_direction={},construction_year='{}',regional_importance_id={},soil_id={},video_remark='{}' WHERE video_id={}".format(
+                data['staff_id'], data['road_name'], data['pipe_type_id'], data['section_shape_id'],
+                data['joint_form_id'], data['pipe_material_id'], data['pipe_diameter'], data['start_pipe_depth'],
+                data['end_pipe_depth'], data['pipe_length'], data['detection_length'], data['detection_direction'],
+                data['construction_year'], data['regional_importance_id'], data['soil_id'], data['video_remark'],
+                data['video_id'])
+            cursor.execute(sql)
+            self.conn.commit()
+            return True
+        except:
+            print('save video failed.')
+            return False
