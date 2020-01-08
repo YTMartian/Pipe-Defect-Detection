@@ -145,7 +145,6 @@ class Database:
         res = []
         for i in data:
             temp = []
-            print(len(i))
             temp.append(str(i[0]))  # video_id.
             temp.append(str(i[1]))  # road_name.
             start_manhole_id = str(i[2])
@@ -404,13 +403,13 @@ class Database:
             res['section_shape_id'] = data[0][7]
             res['joint_form_id'] = data[0][8]
             res['pipe_material_id'] = data[0][9]
-            res['pipe_diameter'] = data[0][10]
-            res['start_pipe_depth'] = data[0][11]
-            res['end_pipe_depth'] = data[0][12]
-            res['pipe_length'] = data[0][13]
-            res['detection_length'] = data[0][14]
-            res['detection_direction'] = data[0][15]
-            res['construction_year'] = str(data[0][16])
+            res['pipe_diameter'] = data[0][10] if data[0][10] is not None else 0
+            res['start_pipe_depth'] = data[0][11] if data[0][11] is not None else 0
+            res['end_pipe_depth'] = data[0][12] if data[0][12] is not None else 0
+            res['pipe_length'] = data[0][13] if data[0][13] is not None else 0
+            res['detection_length'] = data[0][14] if data[0][14] is not None else 0
+            res['detection_direction'] = data[0][15] if data[0][15] is not None else 0
+            res['construction_year'] = data[0][16]
             res['regional_importance_id'] = data[0][17]
             res['soil_id'] = data[0][18]
             res['video_remark'] = data[0][19]
@@ -423,36 +422,48 @@ class Database:
             res['pipe_material'] = self.get_one_table('pipe_material')
             res['regional'] = self.get_one_table('regional')
             res['soil'] = self.get_one_table('soil')
+            res['manhole_cover'] = self.get_one_table('manhole_cover')
+            res['manhole_type'] = self.get_one_table('manhole_type')
+            res['manhole_material'] = self.get_one_table('manhole_material')
             cursor.execute("SELECT * FROM manhole WHERE manhole_id={}".format(res['start_manhole_id']))
             data = cursor.fetchall()
             res['start_manhole_no'] = data[0][1]
             res['start_manhole_type_id'] = data[0][2]
-            res['start_manhole_material _id'] = data[0][3]
+            res['start_manhole_material_id'] = data[0][3]
             res['start_manhole_cover_id'] = data[0][4]
             res['start_manhole_construction_year'] = str(data[0][5])
-            res['start_manhole_longitude'] = data[0][6]
-            res['start_manhole_latitude'] = data[0][7]
+            res['start_manhole_longitude'] = data[0][6] if data[0][6] is not None else 0
+            res['start_manhole_latitude'] = data[0][7] if data[0][7] is not None else 0
             res['start_internal_defect'] = data[0][8]
             res['start_external_defect'] = data[0][9]
-            res['start_pipe_invert'] = data[0][10]
-            res['start_pipe_elevation'] = data[0][11]
+            res['start_pipe_invert'] = data[0][10] if data[0][10] is not None else 0
+            res['start_pipe_elevation'] = data[0][11] if data[0][11] is not None else 0
             cursor.execute("SELECT * FROM manhole WHERE manhole_id={}".format(res['end_manhole_id']))
             data = cursor.fetchall()
             res['end_manhole_no'] = data[0][1]
             res['end_manhole_type_id'] = data[0][2]
-            res['end_manhole_material _id'] = data[0][3]
+            res['end_manhole_material_id'] = data[0][3]
             res['end_manhole_cover_id'] = data[0][4]
             res['end_manhole_construction_year'] = str(data[0][5])
-            res['end_manhole_longitude'] = data[0][6]
-            res['end_manhole_latitude'] = data[0][7]
+            res['end_manhole_longitude'] = data[0][6] if data[0][6] is not None else 0
+            res['end_manhole_latitude'] = data[0][7] if data[0][7] is not None else 0
             res['end_internal_defect'] = data[0][8]
             res['end_external_defect'] = data[0][9]
-            res['end_pipe_invert'] = data[0][10]
-            res['end_pipe_elevation'] = data[0][11]
+            res['end_pipe_invert'] = data[0][10] if data[0][10] is not None else 0
+            res['end_pipe_elevation'] = data[0][11] if data[0][11] is not None else 0
             return res
         except:
             print('get video by video_id failed.')
             return None
 
     def get_video_by_defect_id(self, defect_id):
-        pass
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT video_id FROM defect WHERE defect_id={}".format(defect_id))
+            data = cursor.fetchall()
+            self.conn.commit()
+            video_id = str(data[0][0])
+            return self.get_video_by_video_id(video_id=video_id)
+        except:
+            print('get video by defect_id failed.')
+            return None

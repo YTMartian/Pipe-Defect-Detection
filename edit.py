@@ -25,6 +25,7 @@ class Edit(QMainWindow):
         ''')
         self.db = db
         self.mode = mode
+        self.data = None
 
         self.main_widget = QtWidgets.QWidget(self)  # must add widget to dialog.
         self.main_layout = QtWidgets.QGridLayout(self)
@@ -250,10 +251,10 @@ class Edit(QMainWindow):
         self.pipe_type_label, self.pipe_type_widget = QLabel(), QComboBox()
         self.pipe_type_label.setText('管道类型')
         self.edit_video_scroll_area_form.addRow(self.pipe_type_label, self.pipe_type_widget)
-        self.section_shape_label, self.section_shape_widget = QLabel(), QLineEdit()
+        self.section_shape_label, self.section_shape_widget = QLabel(), QComboBox()
         self.section_shape_label.setText('截面形状')
         self.edit_video_scroll_area_form.addRow(self.section_shape_label, self.section_shape_widget)
-        self.joint_form_label, self.joint_form_widget = QLabel(), QLineEdit()
+        self.joint_form_label, self.joint_form_widget = QLabel(), QComboBox()
         self.joint_form_label.setText('接口形式')
         self.edit_video_scroll_area_form.addRow(self.joint_form_label, self.joint_form_widget)
         self.pipe_material_label, self.pipe_material_widget = QLabel(), QComboBox()
@@ -423,15 +424,15 @@ class Edit(QMainWindow):
 
     def save(self):
         if self.mode == self.is_edit_video:
-            print('保存视频信息')
+            self.save_vedio_info()
         elif self.mode == self.is_edit_defect:
-            print('保存缺陷')
+            self.save_defect_info()
 
     def cancel(self):
         if self.mode == self.is_edit_video:
-            print('取消保存视频信息')
+            self.set_video_info()
         elif self.mode == self.is_edit_defect:
-            print('取消保存缺陷')
+            self.set_defect_info()
 
     def hide_something(self):
         if self.mode == self.is_show_project_info:
@@ -592,15 +593,161 @@ class Edit(QMainWindow):
             data = self.main_window.db.get_video_by_defect_id(self.defect_id)
         else:
             data = self.main_window.db.get_video_by_video_id(self.video_id)
+        self.data = data
         if data is None:
             return
         self.video_name_widget.setText(data['video_name'])
         self.video_name_widget.setToolTip(data['video_name'])
+        self.staff_widget.clear()
         for i in data['staff']:
             self.staff_widget.addItem(i[1])
         index = 0
         for i in data['staff']:
-            if i[0] == data['staff_id']:
+            if str(i[0]) == str(data['staff_id']):
                 break
             index += 1
-        print(index)
+        self.staff_widget.setCurrentIndex(index)
+        self.record_date_widget.setText(data['record_date'])
+        self.import_date_widget.setText(data['import_date'])
+        self.road_name_widget.setText(data['road_name'])
+        self.start_manhole_no_widget.setText(data['start_manhole_no'])
+        self.start_manhole_type_widget.clear()
+        for i in data['manhole_type']:
+            self.start_manhole_type_widget.addItem(i[1])
+        index = 0
+        for i in data['manhole_type']:
+            if str(i[0]) == str(data['start_manhole_type_id']):
+                break
+            index += 1
+        self.start_manhole_type_widget.setCurrentIndex(index)
+        self.start_manhole_material_widget.clear()
+        for i in data['manhole_material']:
+            self.start_manhole_material_widget.addItem(i[1])
+        index = 0
+        for i in data['manhole_material']:
+            if str(i[0]) == str(data['start_manhole_material_id']):
+                break
+            index += 1
+        self.start_manhole_material_widget.setCurrentIndex(index)
+        self.start_manhole_cover_widget.clear()
+        for i in data['manhole_cover']:
+            self.start_manhole_cover_widget.addItem(i[1])
+        index = 0
+        for i in data['manhole_cover']:
+            if str(i[0]) == str(data['start_manhole_cover_id']):
+                break
+            index += 1
+        self.start_manhole_cover_widget.setCurrentIndex(index)
+        self.start_manhole_internal_defect_widget.setText(data['start_internal_defect'])
+        self.start_manhole_external_defect_widget.setText(data['start_external_defect'])
+        self.start_manhole_longitude_widget.setValue(data['start_manhole_longitude'])
+        self.start_manhole_latitude_widget.setValue(data['start_manhole_latitude'])
+        self.start_manhole_pipe_elevation_widget.setValue(data['start_pipe_elevation'])
+        self.end_manhole_no_widget.setText(data['end_manhole_no'])
+        self.end_manhole_type_widget.clear()
+        for i in data['manhole_type']:
+            self.end_manhole_type_widget.addItem(i[1])
+        index = 0
+        for i in data['manhole_type']:
+            if str(i[0]) == str(data['end_manhole_type_id']):
+                break
+            index += 1
+        self.end_manhole_type_widget.setCurrentIndex(index)
+        self.end_manhole_material_widget.clear()
+        for i in data['manhole_material']:
+            self.end_manhole_material_widget.addItem(i[1])
+        index = 0
+        for i in data['manhole_material']:
+            if str(i[0]) == str(data['end_manhole_material_id']):
+                break
+            index += 1
+        self.end_manhole_material_widget.setCurrentIndex(index)
+        self.end_manhole_cover_widget.clear()
+        for i in data['manhole_cover']:
+            self.end_manhole_cover_widget.addItem(i[1])
+        index = 0
+        for i in data['manhole_cover']:
+            if str(i[0]) == str(data['end_manhole_cover_id']):
+                break
+            index += 1
+        self.end_manhole_cover_widget.setCurrentIndex(index)
+        self.end_manhole_internal_defect_widget.setText(data['end_internal_defect'])
+        self.end_manhole_external_defect_widget.setText(data['end_external_defect'])
+        self.end_manhole_longitude_widget.setValue(data['end_manhole_longitude'])
+        self.end_manhole_latitude_widget.setValue(data['end_manhole_latitude'])
+        self.end_manhole_pipe_elevation_widget.setValue(data['end_pipe_elevation'])
+        self.pipe_type_widget.clear()
+        for i in data['pipe_type']:
+            self.pipe_type_widget.addItem(i[1])
+        index = 0
+        for i in data['pipe_type']:
+            if str(i[0]) == str(data['pipe_type_id']):
+                break
+            index += 1
+        self.pipe_type_widget.setCurrentIndex(index)
+        self.section_shape_widget.clear()
+        for i in data['section_shape']:
+            self.section_shape_widget.addItem(i[1])
+        index = 0
+        for i in data['section_shape']:
+            if str(i[0]) == str(data['section_shape_id']):
+                break
+            index += 1
+        self.section_shape_widget.setCurrentIndex(index)
+        self.joint_form_widget.clear()
+        for i in data['joint_form']:
+            self.joint_form_widget.addItem(i[1])
+        index = 0
+        for i in data['joint_form']:
+            if str(i[0]) == str(data['joint_form_id']):
+                break
+            index += 1
+        self.joint_form_widget.setCurrentIndex(index)
+        self.pipe_material_widget.clear()
+        for i in data['pipe_material']:
+            self.pipe_material_widget.addItem(i[1])
+        index = 0
+        for i in data['pipe_material']:
+            if str(i[0]) == str(data['pipe_material_id']):
+                break
+            index += 1
+        self.pipe_material_widget.setCurrentIndex(index)
+        self.pipe_diameter_widget.setValue(data['pipe_diameter'])
+        self.start_pipe_depth_widget.setValue(data['start_pipe_depth'])
+        self.end_pipe_depth_widget.setValue(data['end_pipe_depth'])
+        self.pipe_length_widget.setValue(data['pipe_length'])
+        self.detection_length_widget.setValue(data['detection_length'])
+        self.detection_direction_widget.clear()
+        self.detection_direction_widget.addItem('顺流')
+        self.detection_direction_widget.addItem('逆流')
+        self.detection_direction_widget.setCurrentIndex(data['detection_direction'])
+        if data['construction_year'] is not None:
+            self.construction_year_widget.setDate(data['construction_year'])
+        self.regional_importance_widget.clear()
+        for i in data['regional']:
+            self.regional_importance_widget.addItem(i[1])
+        index = 0
+        for i in data['regional']:
+            if str(i[0]) == str(data['regional_importance_id']):
+                break
+            index += 1
+        self.regional_importance_widget.setCurrentIndex(index)
+        self.soil_widget.clear()
+        for i in data['soil']:
+            self.soil_widget.addItem(i[1])
+        index = 0
+        for i in data['soil']:
+            if str(i[0]) == str(data['soil_id']):
+                break
+            index += 1
+        self.soil_widget.setCurrentIndex(index)
+        self.video_remark_widget.setText(data['video_remark'])
+
+    def set_defect_info(self):
+        pass
+
+    def save_video_info(self):
+        pass
+
+    def save_defect_info(self):
+        pass
