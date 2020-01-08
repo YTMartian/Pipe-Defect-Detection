@@ -221,6 +221,8 @@ class Database:
             temp = []
             temp.append(str(i[0]))  # id.
             temp.append(str(i[1]))  # name.
+            if len(i) > 2:
+                temp.append(str(i[2]))  # for defect_type and defect_grade tables.
             res.append(temp.copy())
         return res
 
@@ -466,4 +468,29 @@ class Database:
             return self.get_video_by_video_id(video_id=video_id)
         except:
             print('get video by defect_id failed.')
+            return None
+
+    def get_defect_by_defect_id(self, defect_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM defect WHERE defect_id={}".format(defect_id))
+            data = cursor.fetchall()
+            res = {}
+            res['time_in_video'] = data[0][2]
+            res['defect_type_id'] = data[0][3]
+            res['defect_distance'] = data[0][4] if data[0][4] is not None else 0
+            res['defect_length'] = data[0][5] if data[0][5] is not None else 0
+            res['clock_start'] = data[0][6] if data[0][6] is not None else 0
+            res['clock_end'] = data[0][7] if data[0][7] is not None else 0
+            res['defect_grade_id'] = data[0][8]
+            res['defect_remark'] = data[0][9]
+            res['defect_date'] = data[0][10]
+            res['defect_attribute'] = data[0][11]
+            res['defect_type'] = self.get_one_table('defect_type')
+            res['defect_grade'] = self.get_one_table('defect_grade')
+            if res['defect_remark'] is None:
+                res['defect_remark'] = res['defect_type'][res['defect_type_id'] - 1][2]
+            return res
+        except:
+            print('get defect by defect_id failed.')
             return None

@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QDate
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWindow, QHBoxLayout, QFormLayout, QLineEdit, \
-    QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox
+    QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateTimeEdit
 
 
 class Edit(QMainWindow):
@@ -25,7 +25,8 @@ class Edit(QMainWindow):
         ''')
         self.db = db
         self.mode = mode
-        self.data = None
+        self.video_data = None
+        self.defect_data = None
 
         self.main_widget = QtWidgets.QWidget(self)  # must add widget to dialog.
         self.main_layout = QtWidgets.QGridLayout(self)
@@ -47,7 +48,7 @@ class Edit(QMainWindow):
         self.right_layout = QtWidgets.QGridLayout()
         self.right_layout.setSpacing(0)
         self.right_widget.setLayout(self.right_layout)
-        self.right_widget.setFixedWidth(390)
+        self.right_widget.setFixedWidth(400)
         self.main_layout.addWidget(self.left_widget, 0, 0, 1, 2)
         self.main_layout.addWidget(self.right_widget, 0, 2, 1, 1)
         self.right_top_layout = QHBoxLayout()
@@ -299,6 +300,7 @@ class Edit(QMainWindow):
         """
         self.defect_type_label, self.defect_type_widget = QLabel(), QComboBox()
         self.defect_type_label.setText('缺陷类别')
+        self.defect_type_widget.currentIndexChanged.connect(self.defect_type_changed)
         self.edit_defect_scroll_area_form.addRow(self.defect_type_label, self.defect_type_widget)
         self.defect_attribute_label, self.defect_attribute_widget = QLabel(), QLineEdit()
         self.defect_attribute_label.setText('缺陷性质')
@@ -324,9 +326,14 @@ class Edit(QMainWindow):
         self.clock_end_widget.setMinimum(1)
         self.clock_start_widget.setMaximum(12)
         self.edit_defect_scroll_area_form.addRow(self.clock_end_label, self.clock_end_widget)
-        self.defect_date_label, self.defect_date_widget = QLabel(), QDateEdit()
+        self.defect_date_label, self.defect_date_widget = QLabel(), QLineEdit()
         self.defect_date_label.setText('判读日期')
+        self.defect_date_widget.setReadOnly(True)
         self.edit_defect_scroll_area_form.addRow(self.defect_date_label, self.defect_date_widget)
+        self.defect_time_in_video_label, self.defect_time_in_video_widget = QLabel(), QLineEdit()
+        self.defect_time_in_video_label.setText('视频中位置(帧)')
+        self.defect_time_in_video_widget.setReadOnly(True)
+        self.edit_defect_scroll_area_form.addRow(self.defect_time_in_video_label, self.defect_time_in_video_widget)
         self.defect_remark_label, self.defect_remark_widget = QLabel(), QTextEdit()
         self.defect_remark_label.setText('备注信息')
         self.defect_remark_widget.setFixedWidth(235)
@@ -424,7 +431,7 @@ class Edit(QMainWindow):
 
     def save(self):
         if self.mode == self.is_edit_video:
-            self.save_vedio_info()
+            self.save_video_info()
         elif self.mode == self.is_edit_defect:
             self.save_defect_info()
 
@@ -453,6 +460,7 @@ class Edit(QMainWindow):
             self.edit_video_scroll_area.setVisible(False)
             self.edit_defect_scroll_area.setVisible(True)
             self.project_detailed_scroll_area.setVisible(False)
+            self.set_defect_info()
 
     def edit_video_button_clicked(self):
         self.mode = self.is_edit_video
@@ -593,7 +601,7 @@ class Edit(QMainWindow):
             data = self.main_window.db.get_video_by_defect_id(self.defect_id)
         else:
             data = self.main_window.db.get_video_by_video_id(self.video_id)
-        self.data = data
+        self.video_data = data
         if data is None:
             return
         self.video_name_widget.setText(data['video_name'])
@@ -744,10 +752,52 @@ class Edit(QMainWindow):
         self.video_remark_widget.setText(data['video_remark'])
 
     def set_defect_info(self):
-        pass
+        if self.defect_id is None:
+            return
+        data = self.main_window.db.get_defect_by_defect_id(self.defect_id)
+        self.defect_data = data
+        if data is None:
+            return
+        self.defect_type_widget.clear()
+        for i in data['defect_type']:
+            self.defect_type_widget.addItem(i[1])
+        index = 0
+        for i in data['defect_type']:
+            if str(i[0]) == str(data['defect_type_id']):
+                break
+            index += 1
+        self.defect_type_widget.setCurrentIndex(index)
+        self.defect_attribute_widget.setText(data['defect_attribute'])
+        self.defect_distance_widget.setValue(data['defect_distance'])
+        self.defect_length_widget.setValue(data['defect_length'])
+        self.clock_start_widget.setValue(data['clock_start'])
+        self.clock_end_widget.setValue(data['clock_end'])
+        self.defect_date_widget.setText(str(data['defect_date']))
+        self.defect_time_in_video_widget.setText(str(data['time_in_video']))
+        self.defect_remark_widget.setText(data['defect_remark'])
 
     def save_video_info(self):
         pass
 
     def save_defect_info(self):
-        pass
+        if self.defect_id is None:
+            return
+
+    def defect_type_changed(self):
+        current_index = self.defect_type_widget.currentIndex()
+        if len(self.defect_data['defect_type']) <= current_index:
+            return
+        defect_type_id = self.defect_data['defect_type'][current_index][0]
+        # get defect_grade in current defect_type_id.
+        current_defect_grade = [i for i in self.defect_data['defect_grade'] if str(i[2]) == str(defect_type_id)]
+        self.defect_grade_widget.clear()
+        for i in current_defect_grade:
+            self.defect_grade_widget.addItem(i[1])
+        index = 0
+        for i in current_defect_grade:
+            if str(i[0]) == str(self.defect_data['defect_grade_id']):
+                break
+            index += 1
+        if index == len(current_defect_grade):
+            index = 0
+        self.defect_grade_widget.setCurrentIndex(index)
