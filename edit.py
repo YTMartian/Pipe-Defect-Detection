@@ -826,7 +826,27 @@ class Edit(QMainWindow):
     def save_defect_info(self):
         if self.defect_id is None:
             return
+        data = {}
+        data['defect_id'] = self.defect_id
+        data['time_in_video'] = self.defect_time_in_video_widget.text()
+        data['defect_type_id'] = self.defect_data['defect_type'][self.defect_type_widget.currentIndex()][0]
+        data['defect_attribute'] = self.defect_attribute_widget.text()
+        defect_grade_id_name = self.defect_grade_widget.currentText()
+        data['defect_grade_id'] = 1
+        for i in self.defect_data['defect_grade']:
+            if i[1] == defect_grade_id_name:
+                data['defect_grade_id'] = i[0]
+        data['defect_distance'] = self.defect_distance_widget.text()
+        data['defect_length'] = self.defect_length_widget.text()
+        data['clock_start'] = self.clock_start_widget.text()
+        data['clock_end'] = self.clock_end_widget.text()
+        data['defect_date'] = self.defect_date_widget.text()
+        data['defect_remark'] = self.defect_remark_widget.toPlainText()
 
+        flag = self.main_window.db.save_defect(data)
+        QtWidgets.QMessageBox.information(self, '提示', '保存成功' if flag else '保存失败')
+
+    # choose different defect_type then get the corresponding defect_grade.
     def defect_type_changed(self):
         current_index = self.defect_type_widget.currentIndex()
         if len(self.defect_data['defect_type']) <= current_index:

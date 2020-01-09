@@ -476,7 +476,7 @@ class Database:
             cursor.execute("SELECT * FROM defect WHERE defect_id={}".format(defect_id))
             data = cursor.fetchall()
             res = {}
-            res['video_id']=data[0][1]
+            res['video_id'] = data[0][1]
             res['time_in_video'] = data[0][2]
             res['defect_type_id'] = data[0][3]
             res['defect_distance'] = data[0][4] if data[0][4] is not None else 0
@@ -527,4 +527,18 @@ class Database:
             return True
         except:
             print('save video failed.')
+            return False
+
+    def save_defect(self, data):
+        try:
+            cursor = self.conn.cursor()
+            sql = "UPDATE defect SET time_in_video={},defect_type_id={},defect_distance={},defect_length={},clock_start={},clock_end={},defect_grade_id={},defect_remark='{}',defect_date='{}',defect_attribute='{}' WHERE defect_id={}".format(
+                data['time_in_video'], data['defect_type_id'], data['defect_distance'], data['defect_length'],
+                data['clock_start'], data['clock_end'], data['defect_grade_id'], data['defect_remark'],
+                data['defect_date'], data['defect_attribute'], data['defect_id'])
+            cursor.execute(sql)
+            print(sql)
+            return True
+        except:
+            print('save defect failed.')
             return False
