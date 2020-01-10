@@ -1,8 +1,10 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QDate
-from PyQt5.QtGui import QIcon, QCursor
+from PyQt5.QtGui import QIcon, QCursor, QPixmap
+from PyQt5.QtMultimedia import QMediaPlayer
+from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWindow, QHBoxLayout, QFormLayout, QLineEdit, \
-    QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateTimeEdit
+    QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateTimeEdit, QSlider, QStyle
 
 
 class Edit(QMainWindow):
@@ -27,6 +29,7 @@ class Edit(QMainWindow):
         self.mode = mode
         self.video_data = None
         self.defect_data = None
+        self.is_playing = False
 
         self.main_widget = QtWidgets.QWidget(self)  # must add widget to dialog.
         self.main_layout = QtWidgets.QGridLayout(self)
@@ -428,6 +431,67 @@ class Edit(QMainWindow):
         self.hide_something()
         self.set_project_info()
         self.set_video_info()
+
+        """
+        play the video.
+        """
+        self.video_frame = QLabel()  # show video frame.
+        self.play_button = QPushButton()
+        self.play_button.setIcon(QIcon(':/play'))
+        self.play_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.play_button.clicked.connect(self.play_video)
+        self.play_button.setStyleSheet('''
+            QPushButton{
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:20px;
+                border-radius:5px;
+                font-family:"DengXian";
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:rgba(200,200,200,0.2);
+            }
+        ''')
+        self.previous_frame_button = QPushButton()
+        self.previous_frame_button.setIcon(QIcon(':/previous'))
+        self.previous_frame_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.previous_frame_button.clicked.connect(self.previous_frame)
+        self.previous_frame_button.setStyleSheet('''
+            QPushButton{
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:20px;
+                border-radius:5px;
+                font-family:"DengXian";
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:rgba(200,200,200,0.2);
+            }
+        ''')
+        self.next_frame_button = QPushButton()
+        self.next_frame_button.setIcon(QIcon(':/next'))
+        self.next_frame_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.next_frame_button.clicked.connect(self.next_frame)
+        self.next_frame_button.setStyleSheet('''
+            QPushButton{
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:20px;
+                border-radius:5px;
+                font-family:"DengXian";
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:rgba(200,200,200,0.2);
+            }
+        ''')
+        self.left_layout.addWidget(self.video_frame, 0, 0, 10, 10)
+        self.left_layout.addWidget(self.previous_frame_button, 11, 0, 1, 1)
+        self.left_layout.addWidget(self.play_button, 11, 1, 1, 1)
+        self.left_layout.addWidget(self.next_frame_button, 11, 2, 1, 1)
+        self.left_layout.setAlignment(QtCore.Qt.AlignCenter)
 
     def save(self):
         if self.mode == self.is_edit_video:
@@ -865,3 +929,26 @@ class Edit(QMainWindow):
         if index == len(current_defect_grade):
             index = 0
         self.defect_grade_widget.setCurrentIndex(index)
+
+    # change window size event.
+    def resizeEvent(self, event):
+        image = QPixmap("C:/Users/YTMartian/Desktop/1.jpg")
+        # set the image size to fit it width to the left_layout width.
+        current_left_widget_width = self.width() - self.right_widget.width()
+        new_image_width = current_left_widget_width
+        new_image_height = current_left_widget_width / image.width() * image.height()
+        image = image.scaled(new_image_width, new_image_height)
+        self.video_frame.setPixmap(image)
+
+    def play_video(self):
+        self.is_playing = not self.is_playing
+        if not self.is_playing:
+            self.play_button.setIcon(QIcon(':/play'))
+        else:
+            self.play_button.setIcon(QIcon(':/pause'))
+
+    def previous_frame(self):
+        print('previous frame')
+
+    def next_frame(self):
+        print('next frame')

@@ -27,6 +27,10 @@
 <file alias="edit_video_button">resources/edit_video_button.png</file>
 <file alias="edit_defect_button">resources/edit_defect_button.png</file>
 <file alias="project_detailed_button">resources/project_detailed_button.png</file>
+<file alias="play">resources/play.png</file>
+<file alias="pause">resources/pause.png</file>
+<file alias="previous">resources/previous.png</file>
+<file alias="next">resources/next.png</file>
 
 </qresource>
 </RCC>
