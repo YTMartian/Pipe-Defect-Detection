@@ -33,6 +33,7 @@ class MainWindow(QMainWindow):
         self.edit_project_id = None
         self.is_edit_video = 0
         self.is_edit_defect = 1
+
         edit = Edit(self.db, self.is_edit_video, video_id=35, main_window=self)
         edit.show()
 

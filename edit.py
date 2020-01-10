@@ -1,10 +1,10 @@
-from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QDate
-from PyQt5.QtGui import QIcon, QCursor, QPixmap
-from PyQt5.QtMultimedia import QMediaPlayer
-from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWindow, QHBoxLayout, QFormLayout, QLineEdit, \
     QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateTimeEdit, QSlider, QStyle
+from PyQt5.QtGui import QIcon, QCursor, QPixmap, QImage
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread
+import time
+import cv2
 
 
 class Edit(QMainWindow):
@@ -30,6 +30,8 @@ class Edit(QMainWindow):
         self.video_data = None
         self.defect_data = None
         self.is_playing = False
+        self.video_frame_width = 0
+        self.video_frame_height = 0
 
         self.main_widget = QtWidgets.QWidget(self)  # must add widget to dialog.
         self.main_layout = QtWidgets.QGridLayout(self)
@@ -492,6 +494,18 @@ class Edit(QMainWindow):
         self.left_layout.addWidget(self.play_button, 11, 1, 1, 1)
         self.left_layout.addWidget(self.next_frame_button, 11, 2, 1, 1)
         self.left_layout.setAlignment(QtCore.Qt.AlignCenter)
+        # record this image to determine the frame size after changing the window size.
+        self.image_to_determine_frame_size = None
+        self.new_frame_width = 0
+        self.new_frame_height = 0
+        self.current_frame_number = 1
+        self.total_frame_number = 1
+        self.video = None
+        self.fps = 1
+        # use another thread to change the frame label.
+        self.timer = VideoTimer()
+        self.initialize_video()
+        self.timer.timeSignal.signal[str].connect(self.show_one_frame)
 
     def save(self):
         if self.mode == self.is_edit_video:
@@ -932,23 +946,106 @@ class Edit(QMainWindow):
 
     # change window size event.
     def resizeEvent(self, event):
-        image = QPixmap("C:/Users/YTMartian/Desktop/1.jpg")
+        image = self.image_to_determine_frame_size
         # set the image size to fit it width to the left_layout width.
         current_left_widget_width = self.width() - self.right_widget.width()
-        new_image_width = current_left_widget_width
-        new_image_height = current_left_widget_width / image.width() * image.height()
-        image = image.scaled(new_image_width, new_image_height)
-        self.video_frame.setPixmap(image)
+        self.new_frame_width = current_left_widget_width
+        self.new_frame_height = current_left_widget_width / image.width() * image.height()
+        self.show_one_frame()
 
     def play_video(self):
         self.is_playing = not self.is_playing
         if not self.is_playing:
             self.play_button.setIcon(QIcon(':/play'))
+            self.timer.stop()
         else:
             self.play_button.setIcon(QIcon(':/pause'))
+            self.timer.start()
 
     def previous_frame(self):
-        print('previous frame')
+        if self.current_frame_number > 1:
+            self.current_frame_number -= 1
+        self.show_one_frame()
 
     def next_frame(self):
-        print('next frame')
+        if self.current_frame_number < self.total_frame_number:
+            self.current_frame_number += 1
+        self.show_one_frame()
+
+    def initialize_video(self):
+        try:
+            self.video = cv2.VideoCapture()
+            self.video.open(self.video_data['video_name'])
+            self.total_frame_number = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
+            self.fps = self.video.get(cv2.CAP_PROP_FPS)
+            self.timer.set_fps(self.fps)
+
+            self.image_to_determine_frame_size = self.get_current_frame()
+            self.resizeEvent(None)
+            self.show_one_frame()
+        except:
+            print('initialize video failed.')
+
+    def get_current_frame(self):
+        # get the current frame.
+        self.video.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame_number)
+        flag, img = self.video.read()  # if read successful, then flag is True.
+        height, width = img.shape[:2]
+        if img.ndim == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        elif img.ndim == 2:
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        img = QImage(img.flatten(), width, height, QImage.Format_RGB888)
+        return QPixmap.fromImage(img)
+
+    def show_one_frame(self):
+        if self.current_frame_number == self.total_frame_number:
+            self.is_playing = False
+            self.timer.stop()
+            return
+        image = self.get_current_frame()
+        image = image.scaled(self.new_frame_width, self.new_frame_height)
+        self.video_frame.setPixmap(image)
+        if self.is_playing and self.current_frame_number < self.total_frame_number:
+            self.current_frame_number += 1
+
+
+"""
+Reference:
+https://blog.csdn.net/aaa_a_b_c/article/details/80367147
+https://blog.csdn.net/qq_28622733/article/details/101426120
+"""
+
+
+class Communicate(QObject):
+    signal = QtCore.pyqtSignal(str)
+
+
+class VideoTimer(QThread):
+
+    def __init__(self, fps=24):
+        QThread.__init__(self)
+        self.stopped = False
+        self.fps = fps
+        self.timeSignal = Communicate()
+        self.mutex = QtCore.QMutex()
+
+    def run(self):
+        with QMutexLocker(self.mutex):
+            self.stopped = False
+        while True:
+            if self.stopped:
+                return
+            self.timeSignal.signal.emit('')
+            time.sleep(1 / self.fps)
+
+    def stop(self):
+        with QMutexLocker(self.mutex):
+            self.stopped = True
+
+    def is_stopped(self):
+        with QMutexLocker(self.mutex):
+            return self.stopped
+
+    def set_fps(self, fps):
+        self.fps = fps
