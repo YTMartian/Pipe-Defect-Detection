@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWind
 from PyQt5.QtGui import QIcon, QCursor, QPixmap, QImage
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread
+import random
 import time
 import cv2
 
@@ -444,11 +445,7 @@ class Edit(QMainWindow):
         self.play_button.clicked.connect(self.play_video)
         self.play_button.setStyleSheet('''
             QPushButton{
-                font-weight:bold;
-                color:#f1f1f1;
-                font-size:20px;
                 border-radius:5px;
-                font-family:"DengXian";
                 padding:10px 10px 10px 10px;
             }
             QPushButton:hover{
@@ -461,11 +458,7 @@ class Edit(QMainWindow):
         self.previous_frame_button.clicked.connect(self.previous_frame)
         self.previous_frame_button.setStyleSheet('''
             QPushButton{
-                font-weight:bold;
-                color:#f1f1f1;
-                font-size:20px;
                 border-radius:5px;
-                font-family:"DengXian";
                 padding:10px 10px 10px 10px;
             }
             QPushButton:hover{
@@ -478,9 +471,41 @@ class Edit(QMainWindow):
         self.next_frame_button.clicked.connect(self.next_frame)
         self.next_frame_button.setStyleSheet('''
             QPushButton{
+                border-radius:5px;
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:rgba(200,200,200,0.2);
+            }
+        ''')
+        self.manual_button = QPushButton()
+        self.manual_button.setIcon(QIcon(':/manual'))
+        self.manual_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.manual_button.clicked.connect(self.manual)
+        self.manual_button.setText('手动标记')
+        self.manual_button.setStyleSheet('''
+            QPushButton{
                 font-weight:bold;
                 color:#f1f1f1;
-                font-size:20px;
+                font-size:18px;
+                border-radius:5px;
+                font-family:"DengXian";
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:rgba(200,200,200,0.2);
+            }
+        ''')
+        self.auto_button = QPushButton()
+        self.auto_button.setIcon(QIcon(':/auto'))
+        self.auto_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.auto_button.clicked.connect(self.auto)
+        self.auto_button.setText('自动检测')
+        self.auto_button.setStyleSheet('''
+            QPushButton{
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:18px;
                 border-radius:5px;
                 font-family:"DengXian";
                 padding:10px 10px 10px 10px;
@@ -493,6 +518,8 @@ class Edit(QMainWindow):
         self.left_layout.addWidget(self.previous_frame_button, 11, 0, 1, 1)
         self.left_layout.addWidget(self.play_button, 11, 1, 1, 1)
         self.left_layout.addWidget(self.next_frame_button, 11, 2, 1, 1)
+        self.left_layout.addWidget(self.manual_button, 11, 3, 1, 2)
+        self.left_layout.addWidget(self.auto_button, 11, 5, 1, 2)
         self.left_layout.setAlignment(QtCore.Qt.AlignCenter)
         # record this image to determine the frame size after changing the window size.
         self.image_to_determine_frame_size = None
@@ -504,8 +531,8 @@ class Edit(QMainWindow):
         self.fps = 1
         # use another thread to change the frame label.
         self.timer = VideoTimer()
-        self.initialize_video()
         self.timer.timeSignal.signal[str].connect(self.show_one_frame)
+        self.initialize_video()
 
     def save(self):
         if self.mode == self.is_edit_video:
@@ -947,8 +974,9 @@ class Edit(QMainWindow):
     # change window size event.
     def resizeEvent(self, event):
         image = self.image_to_determine_frame_size
+
         # set the image size to fit it width to the left_layout width.
-        current_left_widget_width = self.width() - self.right_widget.width()
+        current_left_widget_width = self.width() - self.right_widget.width()  # the left widget width.
         self.new_frame_width = current_left_widget_width
         self.new_frame_height = current_left_widget_width / image.width() * image.height()
         self.show_one_frame()
@@ -995,19 +1023,29 @@ class Edit(QMainWindow):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         elif img.ndim == 2:
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-        img = QImage(img.flatten(), width, height, QImage.Format_RGB888)
-        return QPixmap.fromImage(img)
+        img = QImage(img.data, width, height, QImage.Format_RGB888)
+        # when fromImage(),there is a bug when load image from some videos.
+        # for now, we can play avi and some mp4,other mp4 can not play.
+        # don't know why.
+        return QPixmap.fromImage(img, QtCore.Qt.AutoColor)
 
     def show_one_frame(self):
         if self.current_frame_number == self.total_frame_number:
-            self.is_playing = False
-            self.timer.stop()
+            self.current_frame_number = 1
+            self.play_video()
             return
         image = self.get_current_frame()
         image = image.scaled(self.new_frame_width, self.new_frame_height)
         self.video_frame.setPixmap(image)
         if self.is_playing and self.current_frame_number < self.total_frame_number:
             self.current_frame_number += 1
+
+    def manual(self):
+        print('手动标记')
+
+    def auto(self):
+        # the detection method should return a list which each item in it represents a defect frame.
+        print(sorted([random.randint(1, self.total_frame_number) for i in range(10)]))
 
 
 """

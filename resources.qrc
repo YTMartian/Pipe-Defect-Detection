@@ -31,6 +31,8 @@
 <file alias="pause">resources/pause.png</file>
 <file alias="previous">resources/previous.png</file>
 <file alias="next">resources/next.png</file>
+<file alias="auto">resources/auto.png</file>
+<file alias="manual">resources/manual.png</file>
 
 </qresource>
 </RCC>
