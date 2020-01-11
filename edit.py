@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWind
 from PyQt5.QtGui import QIcon, QCursor, QPixmap, QImage
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread
+import functools
 import random
 import time
 import cv2
@@ -514,12 +515,28 @@ class Edit(QMainWindow):
                 background-color:rgba(200,200,200,0.2);
             }
         ''')
+        self.slider = QSlider(QtCore.Qt.Horizontal)
+        self.slider.valueChanged.connect(self.slide_frame)
+        self.slider.setSingleStep(1)
+        self.slider.setCursor((QCursor(QtCore.Qt.PointingHandCursor)))
+        self.show_frame_label = QLabel()
+        self.show_frame_label.setAlignment(QtCore.Qt.AlignRight)
+        self.show_frame_label.setStyleSheet('''
+            QLabel{
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:18px;
+                font-family:"DengXian";
+            }
+        ''')
         self.left_layout.addWidget(self.video_frame, 0, 0, 10, 10)
-        self.left_layout.addWidget(self.previous_frame_button, 11, 0, 1, 1)
-        self.left_layout.addWidget(self.play_button, 11, 1, 1, 1)
-        self.left_layout.addWidget(self.next_frame_button, 11, 2, 1, 1)
-        self.left_layout.addWidget(self.manual_button, 11, 3, 1, 2)
-        self.left_layout.addWidget(self.auto_button, 11, 5, 1, 2)
+        self.left_layout.addWidget(self.slider, 11, 0, 1, 10)
+        self.left_layout.addWidget(self.previous_frame_button, 13, 0, 1, 1)
+        self.left_layout.addWidget(self.play_button, 13, 1, 1, 1)
+        self.left_layout.addWidget(self.next_frame_button, 13, 2, 1, 1)
+        self.left_layout.addWidget(self.manual_button, 13, 3, 1, 2)
+        self.left_layout.addWidget(self.auto_button, 13, 5, 1, 2)
+        self.left_layout.addWidget(self.show_frame_label, 13, 8, 1, 2)
         self.left_layout.setAlignment(QtCore.Qt.AlignCenter)
         # record this image to determine the frame size after changing the window size.
         self.image_to_determine_frame_size = None
@@ -532,6 +549,8 @@ class Edit(QMainWindow):
         # use another thread to change the frame label.
         self.timer = VideoTimer()
         self.timer.timeSignal.signal[str].connect(self.show_one_frame)
+        self.all_defects = self.main_window.db.get_all_defects(self.video_id)
+        self.sort_defects_by_time()
         self.initialize_video()
 
     def save(self):
@@ -1007,6 +1026,8 @@ class Edit(QMainWindow):
             self.total_frame_number = int(self.video.get(cv2.CAP_PROP_FRAME_COUNT))
             self.fps = self.video.get(cv2.CAP_PROP_FPS)
             self.timer.set_fps(self.fps)
+            self.slider.setMinimum(1)
+            self.slider.setMaximum(self.total_frame_number)
 
             self.image_to_determine_frame_size = self.get_current_frame()
             self.resizeEvent(None)
@@ -1030,6 +1051,11 @@ class Edit(QMainWindow):
         return QPixmap.fromImage(img, QtCore.Qt.AutoColor)
 
     def show_one_frame(self):
+        self.slider.setValue(self.current_frame_number)
+        hour_minute_second = self.int_to_time(self.current_frame_number) + '/' + self.int_to_time(
+            self.total_frame_number)
+        self.show_frame_label.setText(
+            str(self.current_frame_number) + '/' + str(self.total_frame_number) + '帧' + '\n' + hour_minute_second)
         if self.current_frame_number == self.total_frame_number:
             self.current_frame_number = 1
             self.play_video()
@@ -1039,6 +1065,27 @@ class Edit(QMainWindow):
         self.video_frame.setPixmap(image)
         if self.is_playing and self.current_frame_number < self.total_frame_number:
             self.current_frame_number += 1
+
+    def slide_frame(self):
+        self.current_frame_number = self.slider.value()
+        if not self.is_playing:
+            self.show_one_frame()
+
+    def int_to_time(self, number):
+        seconds = int(number / self.fps)
+        hours = seconds // 3600
+        seconds -= hours * 3600
+        minutes = seconds // 60
+        seconds -= minutes * 60
+        return "%02d:%02d:%02d" % (hours, minutes, seconds)
+
+    def sort_defects_by_time(self):
+        def cmp(x, y):
+            if x['time_in_video'] < y['time_in_video']:
+                return -1
+            return 0
+
+        self.all_defects = sorted(self.all_defects, key=functools.cmp_to_key(cmp))
 
     def manual(self):
         print('手动标记')

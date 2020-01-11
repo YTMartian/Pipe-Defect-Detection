@@ -338,9 +338,6 @@ class Database:
         except:
             print('delete video failed.')
 
-    def update_video(self, video_id, data):
-        pass
-
     def get_project_by_video_id(self, video_id):
         try:
             cursor = self.conn.cursor()
@@ -542,3 +539,19 @@ class Database:
         except:
             print('save defect failed.')
             return False
+
+    def get_all_defects(self, video_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM defect WHERE video_id={}".format(video_id))
+            data = cursor.fetchall()
+            res = []
+            for i in data:
+                temp = {}
+                temp['defect_id'] = i[0]
+                temp['time_in_video'] = i[2]
+                res.append(temp.copy())
+            return res
+        except:
+            print('get all defects failed.')
+            return []
