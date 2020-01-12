@@ -770,7 +770,6 @@ class MainWindow(QMainWindow):
             delete_video = ''
             if current_row_number != -1:  # if select one row.
                 defect_management = context_menu.addAction("缺陷管理")
-                add_defect = context_menu.addAction("添加缺陷")
                 edit_video = context_menu.addAction("检测信息")
                 delete_video = context_menu.addAction("删除视频")
             action = context_menu.exec_(self.mapToGlobal(event.pos()))
@@ -785,9 +784,6 @@ class MainWindow(QMainWindow):
                 edit.show()
             elif action == delete_video:
                 self.delete_video(self.data[current_row_number][0])
-            elif action == add_defect:
-                edit = Edit(self.db, self.is_edit_defect, video_id=self.data[current_row_number][0], main_window=self)
-                edit.show()
         elif self.management_flag == self.defect_management_flag:
             edit_defect = ''
             delete_defect = ''

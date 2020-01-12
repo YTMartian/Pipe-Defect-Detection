@@ -33,6 +33,9 @@
 <file alias="next">resources/next.png</file>
 <file alias="auto">resources/auto.png</file>
 <file alias="manual">resources/manual.png</file>
+<file alias="backward">resources/backward.png</file>
+<file alias="forward">resources/forward.png</file>
+<file alias="delete">resources/delete.png</file>
 
 </qresource>
 </RCC>

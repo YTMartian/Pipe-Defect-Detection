@@ -277,8 +277,10 @@ class Database:
             self.conn.commit()
             cursor.close()
             print('delete defect successful.')
+            return True
         except:
             print('delete defect failed.')
+            return False
 
     def add_video(self, project_id, video_name):
         try:
@@ -393,6 +395,7 @@ class Database:
             cursor.execute("SELECT * FROM video WHERE video_id={}".format(video_id))
             data = cursor.fetchall()
             res = {}
+            res['video_id'] = data[0][0]
             res['staff_id'] = data[0][1]
             res['record_date'] = str(data[0][2])
             res['road_name'] = data[0][3]
@@ -534,7 +537,6 @@ class Database:
                 data['clock_start'], data['clock_end'], data['defect_grade_id'], data['defect_remark'],
                 data['defect_date'], data['defect_attribute'], data['defect_id'])
             cursor.execute(sql)
-            print(sql)
             return True
         except:
             print('save defect failed.')
@@ -554,4 +556,22 @@ class Database:
             return res
         except:
             print('get all defects failed.')
-            return []
+            return None
+
+    def add_defect(self, data):
+        try:
+            cursor = self.conn.cursor()
+            sql = "INSERT INTO defect(video_id,time_in_video,defect_date) VALUES({},{},'{}')".format(data['video_id'],
+                                                                                                     data[
+                                                                                                         'time_in_video'],
+                                                                                                     data[
+                                                                                                         'defect_date'])
+            cursor.execute(sql)
+            defect_id = cursor.lastrowid
+            res = {}
+            res['defect_id'] = defect_id
+            res['time_in_video'] = data['time_in_video']
+            return res
+        except:
+            print('add defect failed.')
+            return None

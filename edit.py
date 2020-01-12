@@ -128,8 +128,59 @@ class Edit(QMainWindow):
                     background-color:#131313;
                 }
         ''')
+        self.delete_button = QPushButton()
+        self.delete_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.delete_button.setText('删除')
+        self.delete_button.setIcon(QIcon(":/delete"))
+        self.delete_button.clicked.connect(self.delete_defect)
+        self.delete_button.setStyleSheet('''
+            QPushButton{
+                font-weight:bold;
+                background-color:#434343;
+                color:#f1f1f1;
+                font-size:20px;
+                border-radius:10px;
+                font-family:"DengXian";
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:#131313;
+            }
+        ''')
+        self.next_defect_button = QPushButton()
+        self.next_defect_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.next_defect_button.setIcon(QIcon(":/forward"))
+        self.next_defect_button.clicked.connect(self.next_defect)
+        self.next_defect_button.setStyleSheet('''
+            QPushButton{
+                background-color:#434343;
+                border-radius:10px;
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:#131313;
+            }
+        ''')
+        self.previous_defect_button = QPushButton()
+        self.previous_defect_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.previous_defect_button.setIcon(QIcon(":/backward"))
+        self.previous_defect_button.clicked.connect(self.previous_defect)
+        self.previous_defect_button.setStyleSheet('''
+            QPushButton{
+                background-color:#434343;
+                border-radius:10px;
+                padding:10px 10px 10px 10px;
+            }
+            QPushButton:hover{
+                background-color:#131313;
+            }
+        ''')
+
+        self.right_bottom_layout.addWidget(self.previous_defect_button)
         self.right_bottom_layout.addWidget(self.save_button)
         self.right_bottom_layout.addWidget(self.cancel_button)
+        self.right_bottom_layout.addWidget(self.delete_button)
+        self.right_bottom_layout.addWidget(self.next_defect_button)
         self.right_bottom_widget = QtWidgets.QWidget()
         self.right_bottom_widget.setLayout(self.right_bottom_layout)
         self.right_layout.addWidget(self.right_bottom_widget, 22, 0, 1, 3)
@@ -432,6 +483,7 @@ class Edit(QMainWindow):
         self.right_layout.addWidget(self.project_detailed_scroll_area, 2, 0, 20, 3)
 
         self.set_three_buttons_style()
+        self.all_defects = None
         self.hide_something()
         self.set_project_info()
         self.set_video_info()
@@ -529,8 +581,12 @@ class Edit(QMainWindow):
                 font-family:"DengXian";
             }
         ''')
+        self.draw_field = QLabel()
+        self.draw_field.setFixedHeight(20)
+
         self.left_layout.addWidget(self.video_frame, 0, 0, 10, 10)
         self.left_layout.addWidget(self.slider, 11, 0, 1, 10)
+        self.left_layout.addWidget(self.draw_field, 12, 0, 1, 10)
         self.left_layout.addWidget(self.previous_frame_button, 13, 0, 1, 1)
         self.left_layout.addWidget(self.play_button, 13, 1, 1, 1)
         self.left_layout.addWidget(self.next_frame_button, 13, 2, 1, 1)
@@ -549,9 +605,20 @@ class Edit(QMainWindow):
         # use another thread to change the frame label.
         self.timer = VideoTimer()
         self.timer.timeSignal.signal[str].connect(self.show_one_frame)
-        self.all_defects = self.main_window.db.get_all_defects(self.video_id)
-        self.sort_defects_by_time()
         self.initialize_video()
+        self.sort_defects_by_time()
+        self.draw_all_defects()
+
+        # to just solve a bug...
+        if self.mode == self.is_edit_defect:
+            # find the defect_id's index in all_defects.
+            index = 0
+            for i in self.all_defects:
+                if str(self.defect_id) == str(i['defect_id']):
+                    break
+                index += 1
+            self.current_frame_number = int(self.all_defects[index]['time_in_video'])
+            self.show_one_frame()
 
     def save(self):
         if self.mode == self.is_edit_video:
@@ -569,21 +636,32 @@ class Edit(QMainWindow):
         if self.mode == self.is_show_project_info:
             self.save_button.setVisible(False)
             self.cancel_button.setVisible(False)
+            self.next_defect_button.setVisible(False)
+            self.previous_defect_button.setVisible(False)
+            self.delete_button.setVisible(False)
             self.edit_video_scroll_area.setVisible(False)
             self.edit_defect_scroll_area.setVisible(False)
             self.project_detailed_scroll_area.setVisible(True)
         elif self.mode == self.is_edit_video:
             self.save_button.setVisible(True)
             self.cancel_button.setVisible(True)
+            self.next_defect_button.setVisible(False)
+            self.previous_defect_button.setVisible(False)
+            self.delete_button.setVisible(False)
             self.edit_video_scroll_area.setVisible(True)
             self.edit_defect_scroll_area.setVisible(False)
             self.project_detailed_scroll_area.setVisible(False)
         elif self.mode == self.is_edit_defect:
             self.save_button.setVisible(True)
             self.cancel_button.setVisible(True)
+            self.next_defect_button.setVisible(True)
+            self.previous_defect_button.setVisible(True)
+            self.delete_button.setVisible(True)
             self.edit_video_scroll_area.setVisible(False)
             self.edit_defect_scroll_area.setVisible(True)
             self.project_detailed_scroll_area.setVisible(False)
+            if self.defect_id is None and self.all_defects is not None and len(self.all_defects) != 0:
+                self.defect_id = int(self.all_defects[0]['defect_id'])
             self.set_defect_info()
 
     def edit_video_button_clicked(self):
@@ -728,6 +806,10 @@ class Edit(QMainWindow):
         self.video_data = data
         if data is None:
             return
+        self.video_id = int(data['video_id'])
+        if self.all_defects is None:
+            self.all_defects = self.main_window.db.get_all_defects(self.video_id)
+
         self.video_name_widget.setText(data['video_name'])
         self.video_name_widget.setToolTip(data['video_name'])
         self.staff_widget.clear()
@@ -877,12 +959,36 @@ class Edit(QMainWindow):
 
     def set_defect_info(self):
         if self.defect_id is None:
+            self.defect_type_widget.clear()
+            self.defect_grade_widget.clear()
+            self.defect_attribute_widget.clear()
+            self.defect_distance_widget.clear()
+            self.defect_length_widget.clear()
+            self.clock_start_widget.clear()
+            self.clock_end_widget.clear()
+            self.defect_date_widget.clear()
+            self.defect_time_in_video_widget.clear()
+            self.defect_remark_widget.clear()
             return
         data = self.main_window.db.get_defect_by_defect_id(self.defect_id)
         self.defect_data = data
         if data is None:
             return
         self.video_id = data['video_id']
+        if self.all_defects is None:
+            self.all_defects = self.main_window.db.get_all_defects(self.video_id)
+        # find the defect_id's index in all_defects.
+        index = 0
+        for i in self.all_defects:
+            if str(self.defect_id) == str(i['defect_id']):
+                break
+            index += 1
+        self.current_frame_number = int(self.all_defects[index]['time_in_video'])
+        try:
+            self.show_one_frame()
+        except:
+            pass
+
         self.defect_type_widget.clear()
         for i in data['defect_type']:
             self.defect_type_widget.addItem(i[1])
@@ -1019,6 +1125,64 @@ class Edit(QMainWindow):
             self.current_frame_number += 1
         self.show_one_frame()
 
+    def next_defect(self):
+        index = 0
+        # find the defect_id's index in all_defects.
+        for i in self.all_defects:
+            if str(self.defect_id) == str(i['defect_id']):
+                break
+            index += 1
+        # if didn't find the defect_id in all_defects.
+        if index == len(self.all_defects):
+            return
+        index += 1
+        if index == len(self.all_defects):
+            index = 0
+        self.defect_id = int(self.all_defects[index]['defect_id'])
+        self.current_frame_number = int(self.all_defects[index]['time_in_video'])
+        self.show_one_frame()
+        self.set_defect_info()
+
+    def previous_defect(self):
+        index = 0
+        for i in self.all_defects:
+            if str(self.defect_id) == str(i['defect_id']):
+                break
+            index += 1
+        # if didn't find the defect_id in all_defects.
+        if index == len(self.all_defects):
+            return
+        index -= 1
+        if index == -1:
+            index = len(self.all_defects) - 1
+        self.defect_id = int(self.all_defects[index]['defect_id'])
+        self.current_frame_number = int(self.all_defects[index]['time_in_video'])
+        self.show_one_frame()
+        self.set_defect_info()
+
+    def delete_defect(self):
+        if self.defect_id is None:
+            return
+        flag = self.main_window.db.delete_defect(self.defect_id)
+        if flag:
+            QtWidgets.QMessageBox.information(self, '提示', '删除成功')
+            # delete the defect in all_defects.
+            index = 0
+            for i in self.all_defects:
+                if str(self.defect_id) == str(i['defect_id']):
+                    break
+                index += 1
+            del self.all_defects[index]
+            if len(self.all_defects) == 0:
+                self.defect_id = None
+            else:
+                if index == len(self.all_defects):
+                    index = 0
+                self.defect_id = self.all_defects[index]['defect_id']
+            self.set_defect_info()
+        else:
+            QtWidgets.QMessageBox.information(self, '提示', '删除失败')
+
     def initialize_video(self):
         try:
             self.video = cv2.VideoCapture()
@@ -1087,8 +1251,29 @@ class Edit(QMainWindow):
 
         self.all_defects = sorted(self.all_defects, key=functools.cmp_to_key(cmp))
 
+    def draw_all_defects(self):
+        pass
+
     def manual(self):
-        print('手动标记')
+        if self.is_playing:
+            self.play_video()
+        current_frame_number = self.current_frame_number
+        self.edit_defect_button_clicked()
+        self.current_frame_number = current_frame_number
+        self.show_one_frame()
+        data = {}
+        data['video_id'] = self.video_id
+        data['time_in_video'] = self.current_frame_number
+        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        data['defect_date'] = current_time
+        self.defect_date_widget.setText(data['defect_date'])
+        self.defect_time_in_video_widget.setText(str(data['time_in_video']))
+        new_defect = self.main_window.db.add_defect(data)
+        if new_defect is None:
+            QtWidgets.QMessageBox.information(self, '提示', '标记缺陷失败')
+            return
+        self.all_defects.append(new_defect)
+        self.sort_defects_by_time()
 
     def auto(self):
         # the detection method should return a list which each item in it represents a defect frame.
