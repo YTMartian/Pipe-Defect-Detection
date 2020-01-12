@@ -34,8 +34,9 @@ class MainWindow(QMainWindow):
         self.is_edit_video = 0
         self.is_edit_defect = 1
 
-        edit = Edit(self.db, self.is_edit_video, video_id=35, main_window=self)
-        edit.show()
+        # DEBUG.
+        # edit = Edit(self.db, self.is_edit_video, video_id=35, main_window=self)
+        # edit.show()
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.

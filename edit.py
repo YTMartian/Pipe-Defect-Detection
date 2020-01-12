@@ -1280,7 +1280,30 @@ class Edit(QMainWindow):
 
     def auto(self):
         # the detection method should return a list which each item in it represents a defect frame.
-        print(sorted([random.randint(1, self.total_frame_number) for i in range(10)]))
+        frames = [random.randint(1, self.total_frame_number) for i in range(10)]
+        frames = sorted(frames)
+        print(frames)
+        # first delete all defects.
+        self.main_window.db.delete_all_defects(self.video_id)
+        data = {}
+        data['video_id'] = self.video_id
+        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        data['defect_date'] = current_time
+        self.all_defects.clear()
+        for frame in frames:
+            data['time_in_video'] = frame
+            new_defect = self.main_window.db.add_defect(data)
+            if new_defect is None:
+                QtWidgets.QMessageBox.information(self, '提示', '标记帧{}失败'.format(frame))
+            else:
+                self.all_defects.append(new_defect)
+        self.sort_defects_by_time()
+        if len(self.all_defects) == 0:
+            self.defect_id = None
+        else:
+            self.defect_id = self.all_defects[0]['defect_id']
+            self.current_frame_number = self.all_defects[0]['time_in_video']
+        self.show_one_frame()
 
 
 """

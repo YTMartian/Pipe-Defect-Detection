@@ -571,8 +571,17 @@ class Database:
             res = {}
             res['defect_id'] = defect_id
             res['time_in_video'] = data['time_in_video']
-            self.conn.commit()
+            self.conn.commit()  # should commit after insert operation.
             return res
         except:
             print('add defect failed.')
             return None
+
+    def delete_all_defects(self, video_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("DELETE FROM defect WHERE video_id={}".format(video_id))
+            self.conn.commit()
+            print('delete all defects successful.')
+        except:
+            print('delete all defects failed.')
