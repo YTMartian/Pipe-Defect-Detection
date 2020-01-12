@@ -571,6 +571,7 @@ class Database:
             res = {}
             res['defect_id'] = defect_id
             res['time_in_video'] = data['time_in_video']
+            self.conn.commit()
             return res
         except:
             print('add defect failed.')

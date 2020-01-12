@@ -1266,14 +1266,17 @@ class Edit(QMainWindow):
         data['time_in_video'] = self.current_frame_number
         current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         data['defect_date'] = current_time
-        self.defect_date_widget.setText(data['defect_date'])
-        self.defect_time_in_video_widget.setText(str(data['time_in_video']))
         new_defect = self.main_window.db.add_defect(data)
         if new_defect is None:
-            QtWidgets.QMessageBox.information(self, '提示', '标记缺陷失败')
+            QtWidgets.QMessageBox.information(self, '提示', '标记失败')
             return
+        else:
+            QtWidgets.QMessageBox.information(self, '提示', '标记成功')
         self.all_defects.append(new_defect)
         self.sort_defects_by_time()
+        self.show_one_frame()
+        self.defect_id = new_defect['defect_id']
+        self.set_defect_info()
 
     def auto(self):
         # the detection method should return a list which each item in it represents a defect frame.
