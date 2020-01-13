@@ -10,6 +10,7 @@ from resources import *
 from database import *
 from tkinter import *
 from edit import *
+from word import *
 import datetime
 import settings
 import time
@@ -27,6 +28,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1280, 720)
 
         self.db = Database()
+        self.word = Word(self.db)
         self.data = []
         self.is_add_project = False
         self.is_edit_project = False
@@ -761,7 +763,7 @@ class MainWindow(QMainWindow):
             elif action == delete_project:
                 self.delete_project(self.data[current_row_number][0])
             elif action == generate_document:
-                print('生成报告')
+                self.generate_report(self.data[current_row_number][0])
             elif action == add_video:
                 self.add_video(self.data[current_row_number][0])
         elif self.management_flag == self.video_management_flag:
@@ -1022,6 +1024,10 @@ class MainWindow(QMainWindow):
         current_row_number = self.show_table.currentRow()
         self.show_table.removeRow(current_row_number)
         self.db.delete_defect(defect_id)
+
+    def generate_report(self, project_id):
+        flag = self.word.generate(project_id)
+        QtWidgets.QMessageBox.information(self, '提示', '生成成功' if flag else '生成失败')
 
 
 def main():

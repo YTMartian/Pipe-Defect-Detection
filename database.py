@@ -71,7 +71,7 @@ class Database:
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
-        res = [str(data[0][i]) for i in range(0, 17)]
+        res = [str(data[0][i]) for i in range(0, 18)]
         return res
 
     def get_project_statistic(self):
@@ -585,3 +585,29 @@ class Database:
             print('delete all defects successful.')
         except:
             print('delete all defects failed.')
+
+    # get all tables such as detection,staff,etc.
+    def get_all_tables(self):
+        try:
+            cursor = self.conn.cursor()
+            res = {}
+            res['defect_grade'] = self.get_one_table('defect_grade')
+            res['defect_type'] = self.get_one_table('defect_type')
+            res['detection'] = self.get_one_table('detection')
+            res['drainage'] = self.get_one_table('drainage')
+            res['dredging'] = self.get_one_table('dredging')
+            res['joint_form'] = self.get_one_table('joint_form')
+            res['manhole_cover'] = self.get_one_table('manhole_cover')
+            res['manhole_material'] = self.get_one_table('manhole_material')
+            res['manhole_type'] = self.get_one_table('manhole_type')
+            res['move'] = self.get_one_table('move')
+            res['pipe_material'] = self.get_one_table('pipe_material')
+            res['pipe_type'] = self.get_one_table('pipe_type')
+            res['plugging'] = self.get_one_table('plugging')
+            res['regional'] = self.get_one_table('regional')
+            res['section_shape'] = self.get_one_table('section_shape')
+            res['soil'] = self.get_one_table('soil')
+            res['staff'] = self.get_one_table('staff')
+            return res
+        except:
+            print('get all tables failed.')
