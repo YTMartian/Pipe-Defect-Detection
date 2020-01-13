@@ -4,6 +4,10 @@ from tkinter import *
 import datetime
 import time
 
+'''
+auto update content table:https://blog.csdn.net/weixin_42670653/article/details/81476147
+'''
+
 
 class Word:
     def __init__(self, db):
@@ -13,8 +17,7 @@ class Word:
 
     def generate(self, project_id):
         try:
-            self.generate_word(project_id)
-            return True
+            return self.generate_word(project_id)
         except:
             print('generate word failed.')
             return False
@@ -23,6 +26,8 @@ class Word:
         root = Tk()
         root.withdraw()
         self.path = filedialog.asksaveasfilename(title=u'保存文件', filetypes=[("Word文档", ".docx")])
+        if len(self.path) == 0:
+            return False
         self.path = self.path + '.docx'
         project_detailed_data = self.db.get_one_project_detailed(project_id)
         all_tables = self.db.get_all_tables()
@@ -68,7 +73,7 @@ class Word:
             'video_amount': project_statistic[6],
             'pipe_amount': project_statistic[7],
             'pipe_total_length': project_statistic[8],
-            'pipe_total_detection_length':project_statistic[11],
+            'pipe_total_detection_length': project_statistic[11],
             'detection_method': detection_method,
             'detection_equipment': project_detailed_data[17],
             'move_method': move_method,
@@ -82,3 +87,4 @@ class Word:
         }
         self.doc.render(context)
         self.doc.save(self.path)
+        return True

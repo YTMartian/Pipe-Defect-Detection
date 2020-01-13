@@ -758,8 +758,10 @@ class Database:
                 data['detection_direction'] = '顺流' if data['detection_direction'] == 0 else '逆流'
                 data['staff_name'] = [i[1] for i in data['staff'] if int(i[0]) == data['staff_id']][0]
                 data['pipe_type'] = [i[1] for i in data['pipe_type'] if int(i[0]) == data['pipe_type_id']][0]
-                data['pipe_material'] = [i[1] for i in data['pipe_material'] if int(i[0]) == data['pipe_material_id']][0]
+                data['pipe_material'] = [i[1] for i in data['pipe_material'] if int(i[0]) == data['pipe_material_id']][
+                    0]
                 data['defects'] = []
+                data['defect_frames'] = []
                 defects = self.get_defect(video[0])
                 number = 1
                 for defect in defects:
