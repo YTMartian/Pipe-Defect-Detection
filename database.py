@@ -81,6 +81,7 @@ class Database:
         data = cursor.fetchall()
         cursor.close()
         res = []
+        pipe_types = self.get_one_table('pipe_type')
         for i in data:
             temp = [str(i[j]) for j in range(0, 6)]  # the first item is project_id, we need to record it.
             staff_id = temp[4]
@@ -96,12 +97,20 @@ class Database:
             data = cursor.fetchall()
             video_ids = [i[1] for i in data]  # get now project's all video's id.
             pipe_amount = 0
+            p = {}  # to judge if exist the pipe.
+            pipes = []
             for video_id in video_ids:
-                cursor.execute("SELECT start_manhole_id,end_manhole_id FROM video WHERE video_id={}".format(video_id))
+                cursor.execute(
+                    "SELECT start_manhole_id,end_manhole_id,pipe_type_id,pipe_diameter,pipe_length FROM video WHERE video_id={}".format(
+                        video_id))
                 self.conn.commit()
                 data = cursor.fetchall()
                 start_manhole_id = data[0][0]
                 end_manhole_id = data[0][1]
+                pipe_type_id = data[0][2]
+                pipe_type = pipe_types[pipe_type_id - 1][1]
+                pipe_diameter = data[0][3]
+                pipe_length = data[0][4]
                 cursor.execute("SELECT manhole_no FROM manhole WHERE manhole_id in ({},{})".format(start_manhole_id,
                                                                                                    end_manhole_id))
                 self.conn.commit()
@@ -110,7 +119,13 @@ class Database:
                 end_manhole_no = data[1][0]
                 if start_manhole_no is None or end_manhole_no is None:
                     continue
+                if str(start_manhole_no) + str(end_manhole_no) in p:
+                    continue
+                p[str(start_manhole_no) + str(end_manhole_no)] = True
                 pipe_amount += 1
+                pipe = {'number': pipe_amount, 'name': pipe_type, 'diameter': pipe_diameter,
+                        'length': pipe_length}
+                pipes.append(pipe.copy())
             temp.append(str(pipe_amount))
             # get pipe total length.
             pipe_total_length = self.get_value(
@@ -118,7 +133,7 @@ class Database:
                     project_id))
             if pipe_total_length is None:
                 pipe_total_length = 0
-            temp.append(str(pipe_total_length))
+            temp.append(str('%.3f' % pipe_total_length))
             # get standard sum.
             standard_sum = self.get_value(
                 "SELECT COUNT(*) FROM  defect WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {}) ".format(
@@ -127,6 +142,7 @@ class Database:
             # get defect sum.
             defect_sum = standard_sum  # maybe they are the same things?
             temp.append(str(defect_sum))
+            temp.append(pipes.copy())
             res.append(temp.copy())
         return res
 
@@ -199,6 +215,7 @@ class Database:
             temp.append(str(i[2]))  # time_in_video.
             temp.append(str(video_data[0][6]))  # record_date.
             temp.append(str(i[10]))  # interpretation_date.
+            temp.append(str(i[4]))  # defect_distance
 
             temp[3] = self.get_name('pipe_type', temp[3])
             temp[4] = self.get_name('pipe_material', temp[4])
@@ -589,7 +606,6 @@ class Database:
     # get all tables such as detection,staff,etc.
     def get_all_tables(self):
         try:
-            cursor = self.conn.cursor()
             res = {}
             res['defect_grade'] = self.get_one_table('defect_grade')
             res['defect_type'] = self.get_one_table('defect_type')
@@ -611,3 +627,104 @@ class Database:
             return res
         except:
             print('get all tables failed.')
+
+    def get_all_manholes_in_project(self, project_id):
+        try:
+            manholes = []
+            number = 1
+            manhole_type = self.get_one_table('manhole_type')
+            manhole_material = self.get_one_table('manhole_material')
+            manhole_cover = self.get_one_table('manhole_cover')
+            videos = self.get_video(project_id)
+            for video in videos:
+                video_id = video[0]
+                data = self.get_video_by_video_id(video_id)
+                temp = {'number': number, 'manhole_no': data['start_manhole_no'],
+                        'manhole_type': manhole_type[data['start_manhole_type_id'] - 1][1],
+                        'manhole_material': manhole_material[data['start_manhole_material_id'] - 1][1],
+                        'manhole_cover': manhole_cover[data['start_manhole_cover_id'] - 1][1],
+                        'external_defect': data['start_external_defect'],
+                        'internal_defect': data['start_internal_defect']}
+                manholes.append(temp.copy())
+                number += 1
+                temp = {'number': number, 'manhole_no': data['end_manhole_no'],
+                        'manhole_type': manhole_type[data['end_manhole_type_id'] - 1][1],
+                        'manhole_material': manhole_material[data['end_manhole_material_id'] - 1][1],
+                        'manhole_cover': manhole_cover[data['end_manhole_cover_id'] - 1][1],
+                        'external_defect': data['end_external_defect'],
+                        'internal_defect': data['end_internal_defect']}
+                manholes.append(temp.copy())
+                number += 1
+
+            return manholes
+        except:
+            print('get all manholes in project failed.')
+            return []
+
+    def get_pipe_defect_summary(self, project_id):
+        try:
+            res = {'pipe_with_defect_amount': 0, 'pipe_with_structure_defect_amount': 0,
+                   'pipe_with_function_defect_amount': 0, 'pipe_with_both_defect_amount': 0,
+                   'pipe_without_defect_amount': 0, 'pipe_defects': []}
+            number = 1
+            pipe_material = self.get_one_table('pipe_material')
+            videos = self.get_video(project_id)
+            for video in videos:
+                temp = {'number': number}
+                number += 1
+                temp['pipe_no'] = video[2]
+                video_id = video[0]
+                data = self.get_video_by_video_id(video_id)
+                temp['diameter'] = data['pipe_diameter']
+                temp['pipe_material'] = pipe_material[data['pipe_material_id'] - 1][1]
+                temp['pipe_length'] = data['pipe_length']
+                # if defect_type_id is in [1,2,4,6,7,10,11,13,14,15],then it is a structure defect.
+                structure_defect_types = ['AJ', 'BX', 'CK', 'CR', 'FS', 'PL', 'QF', 'SL', 'TJ', 'TL']
+                temp['structure_defects'] = []
+                temp['function_defects'] = []
+                defects = self.get_defect(video_id)
+                flag = True
+                with_structure_flag = False
+                with_function_flag = False
+                for defect in defects:
+                    t = {'defect_distance': defect[12], 'defect_grade': defect[7][0],
+                         'defect_type': defect[6][3:len(defect[6]) - 1]}
+                    defect_type_code = defect[6][0:2]
+                    if defect_type_code in structure_defect_types:
+                        temp['structure_defects'].append(t.copy())
+                        if flag:
+                            res['pipe_with_defect_amount'] += 1
+                        if not with_structure_flag:
+                            res['pipe_with_structure_defect_amount'] += 1
+                        with_structure_flag = True
+                    else:
+                        temp['function_defects'].append(t.copy())
+                        if flag:
+                            res['pipe_with_defect_amount'] += 1
+                        if not with_function_flag:
+                            res['pipe_with_function_defect_amount'] += 1
+                        with_function_flag = True
+                    flag = False
+                if with_structure_flag and with_function_flag:
+                    res['pipe_with_both_defect_amount'] += 1
+                elif flag:
+                    res['pipe_without_defect_amount'] += 1
+                structure_defect_str = ''
+                function_defect_str = ''
+                for i in temp['structure_defects']:
+                    structure_defect_str += '●纵向{}m处存在{}级{}；'.format(i['defect_distance'], i['defect_grade'],
+                                                                       i['defect_type'])
+                for i in temp['function_defects']:
+                    function_defect_str += '●纵向{}m处存在{}级{}；'.format(i['defect_distance'], i['defect_grade'],
+                                                                      i['defect_type'])
+                if len(structure_defect_str) == 0:
+                    structure_defect_str = '无'
+                if len(function_defect_str) == 0:
+                    function_defect_str = '无'
+                # temp['structure_defects'] = structure_defect_str
+                # temp['function_defects'] = function_defect_str
+                res['pipe_defects'].append(temp.copy())
+            return res
+        except:
+            print('get pipe defect summary failed.')
+            return []

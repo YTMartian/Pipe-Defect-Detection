@@ -40,6 +40,15 @@ class Word:
         # get project_statistic.
         all_project_statistic = self.db.get_project_statistic()
         project_statistic = [i for i in all_project_statistic if i[0] == project_id][0]
+        detection_method = [i[1] for i in all_tables['detection'] if i[0] == project_detailed_data[12]][0]
+        move_method = [i[1] for i in all_tables['move'] if i[0] == project_detailed_data[13]][0]
+        plugging_method = [i[1] for i in all_tables['plugging'] if i[0] == project_detailed_data[14]][0]
+        drainage_method = [i[1] for i in all_tables['drainage'] if i[0] == project_detailed_data[15]][0]
+        dredging_method = [i[1] for i in all_tables['dredging'] if i[0] == project_detailed_data[16]][0]
+        pipes = project_statistic[len(project_statistic) - 1]
+        manholes = self.db.get_all_manholes_in_project(project_id)
+        pipe_defect_summary = self.db.get_pipe_defect_summary(project_id)
+
         context = {
             'project_name': project_detailed_data[2],
             'project_no': project_detailed_data[1],
@@ -58,7 +67,16 @@ class Word:
             'end_record_date': end_record_date,
             'video_amount': project_statistic[6],
             'pipe_amount': project_statistic[7],
-            'pipe_total_length': '%.2f' % project_statistic[8]
+            'pipe_total_length': project_statistic[8],
+            'detection_method': detection_method,
+            'detection_equipment': project_detailed_data[17],
+            'move_method': move_method,
+            'plugging_method': plugging_method,
+            'drainage_method': drainage_method,
+            'dredging_method': dredging_method,
+            'pipes': pipes,
+            'manholes': manholes,
+            'pipe_defect_summary': pipe_defect_summary
         }
         self.doc.render(context)
         self.doc.save(self.path)
