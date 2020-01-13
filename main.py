@@ -704,11 +704,14 @@ class MainWindow(QMainWindow):
         for row in range(len(self.data)):
             # the first item is id, we will use it to determine which row we choose to find it in database.
             for column in range(1, len(self.data[row])):
-                cell = QTableWidgetItem(self.data[row][column])
-                # so, in this way, when hover the mouse it will show the whole text.
-                # fantastic.
-                cell.setToolTip(str(self.data[row][column]))
-                self.show_table.setItem(row, column - 1, cell)
+                try:
+                    cell = QTableWidgetItem(self.data[row][column])
+                    # so, in this way, when hover the mouse it will show the whole text.
+                    # fantastic.
+                    cell.setToolTip(str(self.data[row][column]))
+                    self.show_table.setItem(row, column - 1, cell)
+                except:
+                    pass
 
     # right click menu.
     def contextMenuEvent(self, event):
