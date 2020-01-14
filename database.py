@@ -224,6 +224,7 @@ class Database:
             temp.append(str(video_data[0][6]))  # record_date.
             temp.append(str(i[10]))  # interpretation_date.
             temp.append(str(i[4]))  # defect_distance
+            temp.append(str(i[5]))  # defect_length
 
             temp[3] = self.get_name('pipe_type', temp[3])
             temp[4] = self.get_name('pipe_material', temp[4])
@@ -703,7 +704,7 @@ class Database:
                 with_function_flag = False
                 for defect in defects:
                     t = {'defect_distance': defect[12], 'defect_grade': defect[7][0],
-                         'defect_type': defect[6][3:len(defect[6]) - 1]}
+                         'defect_type': defect[6][3:len(defect[6]) - 1],'defect_length':defect[13]}
                     defect_type_code = defect[6][0:2]
                     res['defects_count'][defect_type_code + str(t['defect_grade'])] += 1
                     res['defects_count'][defect_type_code + 'total'] += 1
@@ -728,20 +729,6 @@ class Database:
                     res['pipe_with_both_defect_amount'] += 1
                 elif flag:
                     res['pipe_without_defect_amount'] += 1
-                structure_defect_str = ''
-                function_defect_str = ''
-                for i in temp['structure_defects']:
-                    structure_defect_str += '●纵向{}m处存在{}级{}；'.format(i['defect_distance'], i['defect_grade'],
-                                                                     i['defect_type'])
-                for i in temp['function_defects']:
-                    function_defect_str += '●纵向{}m处存在{}级{}；'.format(i['defect_distance'], i['defect_grade'],
-                                                                    i['defect_type'])
-                if len(structure_defect_str) == 0:
-                    structure_defect_str = '无'
-                if len(function_defect_str) == 0:
-                    function_defect_str = '无'
-                # temp['structure_defects'] = structure_defect_str
-                # temp['function_defects'] = function_defect_str
                 res['pipe_defects'].append(temp.copy())
             return res
         except:
