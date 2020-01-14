@@ -766,7 +766,7 @@ class Database:
                 number = 1
                 for defect in defects:
                     temp = {'number': number, 'defect_distance': defect[12], 'defect_type': defect[6],
-                            'defect_attribute': defect[8]}
+                            'defect_attribute': defect[8], 'time_in_video': defect[9]}
                     number += 1
                     data['defects'].append(temp.copy())
 

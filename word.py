@@ -2,7 +2,10 @@ from docxtpl import DocxTemplate
 from tkinter import filedialog
 from tkinter import *
 import datetime
+import shutil
 import time
+import cv2
+import os
 
 '''
 auto update content table:https://blog.csdn.net/weixin_42670653/article/details/81476147
@@ -14,6 +17,7 @@ class Word:
         self.db = db
         self.doc = DocxTemplate('template.docx')
         self.path = str(time.time()) + '.docx'
+        self.pic_path = './images/'
 
     def generate(self, project_id):
         try:
@@ -54,6 +58,38 @@ class Word:
         manholes = self.db.get_all_manholes_in_project(project_id)
         pipe_defect_summary = self.db.get_pipe_defect_summary(project_id)
         videos = self.db.get_videos(project_id)
+        # save the pictures.
+        if os.path.exists(self.pic_path):
+            shutil.rmtree(self.pic_path, True)
+        else:
+            os.mkdir(self.pic_path)
+        for video in videos:
+            cap = cv2.VideoCapture()
+            cap.open(video['video_name'])
+            for defect in video['defects']:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, int(defect['time_in_video']))
+                flag, img = cap.read()  # if read successful, then flag is True.
+                if not flag:
+                    print('save image {} failed.'.format(video['video_file_name'] + '-' + defect['time_in_video']))
+                    continue
+                # print(self.pic_path + video['video_file_name'] + '-' + defect['time_in_video'])
+                cv2.imwrite(self.pic_path + video['video_file_name'] + '-' + defect['time_in_video'] + '.jpg', img)
+            cap.release()
+        for i in range(len(videos)):
+            videos[i]['images'] = []
+            temp = {}
+            for j in range(0, len(videos[i]['defects']), 2):
+                temp['left_number'] = j + 1
+                temp['left_image'] = videos[i]['video_file_name'] + '-' + videos[i]['defects'][j][
+                    'time_in_video'] + '.jpg'
+                if j + 1 < len(videos[i]['defects']):
+                    temp['right_image'] = videos[i]['video_file_name'] + '-' + videos[i]['defects'][j + 1][
+                        'time_in_video'] + '.jpg'
+                else:
+                    temp['right_image'] = ''
+                temp['right_number'] = j + 2
+                videos[i]['images'].append(temp.copy())
+
         context = {
             'project_name': project_detailed_data[2],
             'project_no': project_detailed_data[1],
