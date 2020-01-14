@@ -1,4 +1,5 @@
-from docxtpl import DocxTemplate
+from docx.shared import Mm
+from docxtpl import DocxTemplate, InlineImage
 from tkinter import filedialog
 from tkinter import *
 import datetime
@@ -61,8 +62,10 @@ class Word:
         # save the pictures.
         if os.path.exists(self.pic_path):
             shutil.rmtree(self.pic_path, True)
-        else:
-            os.mkdir(self.pic_path)
+        # em...just to give computer some time to delete the images.
+        # or it will not find the path...
+        time.sleep(1)
+        os.mkdir(self.pic_path)
         for video in videos:
             cap = cv2.VideoCapture()
             cap.open(video['video_name'])
@@ -82,9 +85,15 @@ class Word:
                 temp['left_number'] = j + 1
                 temp['left_image'] = videos[i]['video_file_name'] + '-' + videos[i]['defects'][j][
                     'time_in_video'] + '.jpg'
+                # add image.
+                # https://docxtpl.readthedocs.io/en/latest/
+                temp['left_image'] = InlineImage(self.doc, os.getcwd() + self.pic_path[1:] + temp['left_image'],
+                                                 height=Mm(60))
                 if j + 1 < len(videos[i]['defects']):
                     temp['right_image'] = videos[i]['video_file_name'] + '-' + videos[i]['defects'][j + 1][
                         'time_in_video'] + '.jpg'
+                    temp['right_image'] = InlineImage(self.doc, os.getcwd() + self.pic_path[1:] + temp['right_image'],
+                                                      height=Mm(60))
                 else:
                     temp['right_image'] = ''
                 temp['right_number'] = j + 2
