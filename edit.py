@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWind
     QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateTimeEdit, QSlider, QStyle
 from PyQt5.QtGui import QIcon, QCursor, QPixmap, QImage, QPainter, QColor, QPen, QBrush
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread, QRect
+from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread, QRect, pyqtSignal
 import functools
 import random
 import time
@@ -573,6 +573,7 @@ class Edit(QMainWindow):
         self.slider.valueChanged.connect(self.slide_frame)
         self.slider.setSingleStep(1)
         self.slider.setCursor((QCursor(QtCore.Qt.PointingHandCursor)))
+        self.slider.slider_signal.connect(self.set_defect_mark)
         self.slider.setStyleSheet('''
                 QSlider{
                     background:transparent;
@@ -642,7 +643,6 @@ class Edit(QMainWindow):
         self.painter = QPainter()
         self.painter.setPen(QtCore.Qt.green)
         self.brush = QBrush(QtCore.Qt.SolidPattern)
-        self.brush.setColor(QColor(220, 0, 0))
 
         self.left_layout.addWidget(self.video_frame, 0, 0, 10, 10)
         self.left_layout.addWidget(self.draw_field, 11, 0, 1, 10)
@@ -1212,6 +1212,7 @@ class Edit(QMainWindow):
         self.current_frame_number = int(self.all_defects[index]['time_in_video'])
         self.show_one_frame()
         self.set_defect_info()
+        self.draw_defect_marks_in_slider()
 
     def previous_defect(self):
         index = 0
@@ -1229,6 +1230,7 @@ class Edit(QMainWindow):
         self.current_frame_number = int(self.all_defects[index]['time_in_video'])
         self.show_one_frame()
         self.set_defect_info()
+        self.draw_defect_marks_in_slider()
 
     def delete_defect(self):
         if self.defect_id is None:
@@ -1363,20 +1365,31 @@ class Edit(QMainWindow):
         self.draw_defect_marks_in_slider()
 
     def draw_defect_marks_in_slider(self, is_maximize=False):
-        print(self.draw_field.width())
+        # print(self.draw_field.width())
         initialization = self.initialization
         self.initialization = self.initialization + 1 if self.initialization < 2 else 2
         draw_field_image = QPixmap(self.draw_field.width(), self.draw_field.height())
         if is_maximize:
             draw_field_image = QPixmap(1476, self.draw_field.height())
+        elif initialization < 2:
+            draw_field_image = QPixmap(836, self.draw_field.height())
         draw_field_image.fill(QtCore.Qt.transparent)
         self.painter.begin(draw_field_image)
         mark_width = 5
         for i in self.all_defects:
             slider_width = self.slider.width()
             time_in_video = float(i['time_in_video'])
+            if i['time_in_video'] == self.current_frame_number:
+                self.brush.setColor(QColor(0, 215, 0))
+            else:
+                self.brush.setColor(QColor(235, 0, 0))
             # print(time_in_video, end=' ')
             start_x = slider_width * time_in_video / self.total_frame_number
+            # fine tune.
+            if start_x < slider_width / 2.0:
+                offset = 2
+            else:
+                offset = -4
             # when maximize the window, the widget width changed incorrect,unless click some buttons.
             if is_maximize:
                 start_x = start_x * 1476.0 / slider_width
@@ -1385,11 +1398,45 @@ class Edit(QMainWindow):
             # so I judge the number 2...
             if initialization < 2:
                 start_x = start_x * 836.0 / 640
+            '''
+            # to make the marks in the correct position to the slider position.
+            # we can fit a function: when start_x=1,offset=8 is the best,start_x=180,offset=6 is the best...
+            # fit the data from http://www.qinms.com/webapp/curvefit/cf.aspx
+            # data:
+                    1,8
+                    180,6
+                    317,3
+                    348,1
+                    366,0
+                    472,-2
+                    595,-5
+                    647,-4
+                    811 -8
+                    1050,-6
+                    1351,-4
+            '''
+            offset += (8.49999999999999 + 8.49999999999995) / (
+                    1 + (start_x / 240.481335279565) ** 0.719976570232466) - 8.49999999999995
             # fillRect(start_x, start_y, width, height)
-            self.painter.fillRect(int(start_x), 0, mark_width, 20, self.brush)
+            self.painter.fillRect(int(start_x + offset), 0, mark_width, 20, self.brush)
         self.draw_field.setPixmap(draw_field_image)
         # should end.
         self.painter.end()
+
+    def set_defect_mark(self):
+        min_ = self.total_frame_number
+        min_interval = 15
+        nearest = None
+        for i in self.all_defects:
+            abs_ = abs(self.current_frame_number - i['time_in_video'])
+            if abs_ < min_ and abs_ <= min_interval:
+                min_ = abs_
+                nearest = i
+        if nearest is not None:
+            self.current_frame_number = nearest['time_in_video']
+            self.draw_defect_marks_in_slider()
+            self.defect_id = nearest['defect_id']
+            self.set_defect_info()
 
 
 """
@@ -1435,12 +1482,15 @@ class VideoTimer(QThread):
 
 # https://stackoverflow.com/questions/52689047/moving-qslider-to-mouse-click-position
 class Slider(QtWidgets.QSlider):
+    slider_signal = pyqtSignal()
+
     # move the position to the mouse clicked position.
     def mousePressEvent(self, event):
         super(Slider, self).mousePressEvent(event)
         if event.button() == QtCore.Qt.LeftButton:
             val = self.pixelPosToRangeValue(event.pos())
             self.setValue(val)
+            self.slider_signal.emit()
 
     def pixelPosToRangeValue(self, pos):
         opt = QtWidgets.QStyleOptionSlider()
