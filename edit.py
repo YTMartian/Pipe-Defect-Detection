@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWindow, QHBoxLayout, QFormLayout, QLineEdit, \
     QComboBox, QDateEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateTimeEdit, QSlider, QStyle
-from PyQt5.QtGui import QIcon, QCursor, QPixmap, QImage
+from PyQt5.QtGui import QIcon, QCursor, QPixmap, QImage, QPainter, QColor, QPen, QBrush
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread
+from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread, QRect
 import functools
 import random
 import time
@@ -34,6 +34,8 @@ class Edit(QMainWindow):
         self.is_playing = False
         self.video_frame_width = 0
         self.video_frame_height = 0
+        self.is_auto_detect = False
+        self.initialization = 0
 
         self.main_widget = QtWidgets.QWidget(self)  # must add widget to dialog.
         self.main_layout = QtWidgets.QGridLayout(self)
@@ -98,7 +100,7 @@ class Edit(QMainWindow):
         self.save_button.setStyleSheet('''
             QPushButton{
                     font-weight:bold;
-                    background-color:#434343;
+                    background-color:#827ae1;
                     color:#f1f1f1;
                     font-size:20px;
                     border-radius:10px;
@@ -106,7 +108,7 @@ class Edit(QMainWindow):
                     padding:10px 10px 10px 10px;
                 }
                 QPushButton:hover{
-                    background-color:#131313;
+                    background-color:#5246e2;
                 }
         ''')
         self.cancel_button = QPushButton()
@@ -117,7 +119,7 @@ class Edit(QMainWindow):
         self.cancel_button.setStyleSheet('''
             QPushButton{
                     font-weight:bold;
-                    background-color:#434343;
+                    background-color:#827ae1;
                     color:#f1f1f1;
                     font-size:20px;
                     border-radius:10px;
@@ -125,7 +127,7 @@ class Edit(QMainWindow):
                     padding:10px 10px 10px 10px;
                 }
                 QPushButton:hover{
-                    background-color:#131313;
+                    background-color:#5246e2;
                 }
         ''')
         self.delete_button = QPushButton()
@@ -136,7 +138,7 @@ class Edit(QMainWindow):
         self.delete_button.setStyleSheet('''
             QPushButton{
                 font-weight:bold;
-                background-color:#434343;
+                background-color:#827ae1;
                 color:#f1f1f1;
                 font-size:20px;
                 border-radius:10px;
@@ -144,7 +146,7 @@ class Edit(QMainWindow):
                 padding:10px 10px 10px 10px;
             }
             QPushButton:hover{
-                background-color:#131313;
+                background-color:#5246e2;
             }
         ''')
         self.next_defect_button = QPushButton()
@@ -153,12 +155,12 @@ class Edit(QMainWindow):
         self.next_defect_button.clicked.connect(self.next_defect)
         self.next_defect_button.setStyleSheet('''
             QPushButton{
-                background-color:#434343;
+                background-color:#eeeeee;
                 border-radius:10px;
                 padding:10px 10px 10px 10px;
             }
             QPushButton:hover{
-                background-color:#131313;
+                background-color:#d4d4d4;
             }
         ''')
         self.previous_defect_button = QPushButton()
@@ -167,12 +169,12 @@ class Edit(QMainWindow):
         self.previous_defect_button.clicked.connect(self.previous_defect)
         self.previous_defect_button.setStyleSheet('''
             QPushButton{
-                background-color:#434343;
+                background-color:#eeeeee;
                 border-radius:10px;
                 padding:10px 10px 10px 10px;
             }
             QPushButton:hover{
-                background-color:#131313;
+                background-color:#d4d4d4;
             }
         ''')
 
@@ -567,10 +569,64 @@ class Edit(QMainWindow):
                 background-color:rgba(200,200,200,0.2);
             }
         ''')
-        self.slider = QSlider(QtCore.Qt.Horizontal)
+        self.slider = Slider(QtCore.Qt.Horizontal)
         self.slider.valueChanged.connect(self.slide_frame)
         self.slider.setSingleStep(1)
         self.slider.setCursor((QCursor(QtCore.Qt.PointingHandCursor)))
+        self.slider.setStyleSheet('''
+                QSlider{
+                    background:transparent;
+                }
+                QSlider::groove:horizontal {
+                    border: 1px solid #bbb;
+                    background: white;
+                    height: 7px;
+                    border-radius: 4px;
+                }
+                QSlider::sub-page:horizontal {
+                    background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
+                        stop: 0 #66e, stop: 1 #bbf);
+                    background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
+                        stop: 0 #bbf, stop: 1 #55f);
+                    border: 1px solid #777;
+                    height: 10px;
+                    border-radius: 4px;
+                }
+                QSlider::add-page:horizontal {
+                    background: #fff;
+                    border: 1px solid #777;
+                    height: 10px;
+                    border-radius: 4px;
+                }
+                QSlider::handle:horizontal {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                        stop:0 #eee, stop:1 #ccc);
+                    border: 1px solid #777;
+                    width: 18px;
+                    margin-top: -2px;
+                    margin-bottom: -2px;
+                    border-radius: 4px;
+                }
+                QSlider::handle:horizontal:hover {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                        stop:0 #fff, stop:1 #ddd);
+                    border: 1px solid #444;
+                    border-radius: 4px;
+                }
+                QSlider::sub-page:horizontal:disabled {
+                    background: #bbb;
+                    border-color: #999;
+                }
+                QSlider::add-page:horizontal:disabled {
+                    background: #eee;
+                    border-color: #999;
+                }
+                QSlider::handle:horizontal:disabled {
+                    background: #eee;
+                    border: 1px solid #aaa;
+                    border-radius: 4px;
+                }
+        ''')
         self.show_frame_label = QLabel()
         self.show_frame_label.setAlignment(QtCore.Qt.AlignRight)
         self.show_frame_label.setStyleSheet('''
@@ -582,11 +638,15 @@ class Edit(QMainWindow):
             }
         ''')
         self.draw_field = QLabel()
-        self.draw_field.setFixedHeight(20)
+        self.draw_field.setMaximumHeight(20)
+        self.painter = QPainter()
+        self.painter.setPen(QtCore.Qt.green)
+        self.brush = QBrush(QtCore.Qt.SolidPattern)
+        self.brush.setColor(QColor(220, 0, 0))
 
         self.left_layout.addWidget(self.video_frame, 0, 0, 10, 10)
+        self.left_layout.addWidget(self.draw_field, 11, 0, 1, 10)
         self.left_layout.addWidget(self.slider, 11, 0, 1, 10)
-        self.left_layout.addWidget(self.draw_field, 12, 0, 1, 10)
         self.left_layout.addWidget(self.previous_frame_button, 13, 0, 1, 1)
         self.left_layout.addWidget(self.play_button, 13, 1, 1, 1)
         self.left_layout.addWidget(self.next_frame_button, 13, 2, 1, 1)
@@ -673,6 +733,7 @@ class Edit(QMainWindow):
         self.mode = self.is_edit_defect
         self.set_three_buttons_style()
         self.hide_something()
+        self.draw_defect_marks_in_slider()
 
     def project_detailed_button_clicked(self):
         self.mode = self.is_show_project_info
@@ -684,7 +745,7 @@ class Edit(QMainWindow):
         self.edit_video_button.setStyleSheet('''
             QPushButton{
                     font-weight:bold;
-                    background-color:#535353;
+                    background-color:#137bc7;
                     color:#f1f1f1;
                     font-size:16px;
                     border-radius:10px;
@@ -692,13 +753,13 @@ class Edit(QMainWindow):
                     padding:10px 10px 10px 10px;
                 }
                 QPushButton:hover{
-                    background-color:#131313;
+                    background-color:#0d63a2;
                 }
         ''')
         self.edit_defect_button.setStyleSheet('''
             QPushButton{
                     font-weight:bold;
-                    background-color:#535353;
+                    background-color:#137bc7;
                     color:#f1f1f1;
                     font-size:16px;
                     border-radius:10px;
@@ -706,13 +767,13 @@ class Edit(QMainWindow):
                     padding:10px 10px 10px 10px;
                 }
                 QPushButton:hover{
-                    background-color:#131313;
+                    background-color:#0d63a2;
                 }
         ''')
         self.project_detailed_button.setStyleSheet('''
             QPushButton{
                     font-weight:bold;
-                    background-color:#535353;
+                    background-color:#137bc7;
                     color:#f1f1f1;
                     font-size:16px;
                     border-radius:10px;
@@ -720,14 +781,14 @@ class Edit(QMainWindow):
                     padding:10px 10px 10px 10px;
                 }
                 QPushButton:hover{
-                    background-color:#131313;
+                    background-color:#0d63a2;
                 }
         ''')
         if self.mode == self.is_edit_video:
             self.edit_video_button.setStyleSheet('''
                 QPushButton{
                         font-weight:bold;
-                        background-color:#131313;
+                        background-color:#0d63a2;
                         color:#f1f1f1;
                         font-size:16px;
                         border-radius:10px;
@@ -739,7 +800,7 @@ class Edit(QMainWindow):
             self.edit_defect_button.setStyleSheet('''
                 QPushButton{
                         font-weight:bold;
-                        background-color:#131313;
+                        background-color:#0d63a2;
                         color:#f1f1f1;
                         font-size:16px;
                         border-radius:10px;
@@ -751,7 +812,7 @@ class Edit(QMainWindow):
             self.project_detailed_button.setStyleSheet('''
                 QPushButton{
                         font-weight:bold;
-                        background-color:#131313;
+                        background-color:#0d63a2;
                         color:#f1f1f1;
                         font-size:16px;
                         border-radius:10px;
@@ -1075,6 +1136,7 @@ class Edit(QMainWindow):
 
         flag = self.main_window.db.save_defect(data)
         QtWidgets.QMessageBox.information(self, '提示', '保存成功' if flag else '保存失败')
+        self.draw_defect_marks_in_slider()
 
     # choose different defect_type then get the corresponding defect_grade.
     def defect_type_changed(self):
@@ -1096,6 +1158,13 @@ class Edit(QMainWindow):
             index = 0
         self.defect_grade_widget.setCurrentIndex(index)
 
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            if event.oldState() and QtCore.Qt.WindowMinimized:
+                pass
+            elif event.oldState() == QtCore.Qt.WindowNoState or self.windowState() == QtCore.Qt.WindowMaximized:
+                self.draw_defect_marks_in_slider(is_maximize=True)
+
     # change window size event.
     def resizeEvent(self, event):
         image = self.image_to_determine_frame_size
@@ -1105,6 +1174,7 @@ class Edit(QMainWindow):
         self.new_frame_width = current_left_widget_width
         self.new_frame_height = current_left_widget_width / image.width() * image.height()
         self.show_one_frame()
+        self.draw_defect_marks_in_slider()
 
     def play_video(self):
         self.is_playing = not self.is_playing
@@ -1182,6 +1252,7 @@ class Edit(QMainWindow):
             self.set_defect_info()
         else:
             QtWidgets.QMessageBox.information(self, '提示', '删除失败')
+        self.draw_defect_marks_in_slider()
 
     def initialize_video(self):
         try:
@@ -1203,6 +1274,8 @@ class Edit(QMainWindow):
         # get the current frame.
         self.video.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame_number)
         flag, img = self.video.read()  # if read successful, then flag is True.
+        if self.is_auto_detect:
+            pass
         height, width = img.shape[:2]
         if img.ndim == 3:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -1277,33 +1350,46 @@ class Edit(QMainWindow):
         self.show_one_frame()
         self.defect_id = new_defect['defect_id']
         self.set_defect_info()
+        self.draw_defect_marks_in_slider()
 
     def auto(self):
-        # the detection method should return a list which each item in it represents a defect frame.
-        frames = [random.randint(1, self.total_frame_number) for i in range(10)]
-        frames = sorted(frames)
-        print(frames)
-        # first delete all defects.
-        self.main_window.db.delete_all_defects(self.video_id)
-        data = {}
-        data['video_id'] = self.video_id
-        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-        data['defect_date'] = current_time
-        self.all_defects.clear()
-        for frame in frames:
-            data['time_in_video'] = frame
-            new_defect = self.main_window.db.add_defect(data)
-            if new_defect is None:
-                QtWidgets.QMessageBox.information(self, '提示', '标记帧{}失败'.format(frame))
-            else:
-                self.all_defects.append(new_defect)
-        self.sort_defects_by_time()
-        if len(self.all_defects) == 0:
-            self.defect_id = None
+        self.is_auto_detect = not self.is_auto_detect
+        if self.is_auto_detect:
+            self.auto_button.setText('停止')
+            self.auto_button.setIcon(QIcon(':/auto_stop'))
         else:
-            self.defect_id = self.all_defects[0]['defect_id']
-            self.current_frame_number = self.all_defects[0]['time_in_video']
-        self.show_one_frame()
+            self.auto_button.setText('自动检测')
+            self.auto_button.setIcon(QIcon(':/auto'))
+        self.draw_defect_marks_in_slider()
+
+    def draw_defect_marks_in_slider(self, is_maximize=False):
+        print(self.draw_field.width())
+        initialization = self.initialization
+        self.initialization = self.initialization + 1 if self.initialization < 2 else 2
+        draw_field_image = QPixmap(self.draw_field.width(), self.draw_field.height())
+        if is_maximize:
+            draw_field_image = QPixmap(1476, self.draw_field.height())
+        draw_field_image.fill(QtCore.Qt.transparent)
+        self.painter.begin(draw_field_image)
+        mark_width = 5
+        for i in self.all_defects:
+            slider_width = self.slider.width()
+            time_in_video = float(i['time_in_video'])
+            # print(time_in_video, end=' ')
+            start_x = slider_width * time_in_video / self.total_frame_number
+            # when maximize the window, the widget width changed incorrect,unless click some buttons.
+            if is_maximize:
+                start_x = start_x * 1476.0 / slider_width
+            # same with top, when first open this window.
+            # and I don't know why when first open this window this function will run twice.
+            # so I judge the number 2...
+            if initialization < 2:
+                start_x = start_x * 836.0 / 640
+            # fillRect(start_x, start_y, width, height)
+            self.painter.fillRect(int(start_x), 0, mark_width, 20, self.brush)
+        self.draw_field.setPixmap(draw_field_image)
+        # should end.
+        self.painter.end()
 
 
 """
@@ -1345,3 +1431,32 @@ class VideoTimer(QThread):
 
     def set_fps(self, fps):
         self.fps = fps
+
+
+# https://stackoverflow.com/questions/52689047/moving-qslider-to-mouse-click-position
+class Slider(QtWidgets.QSlider):
+    # move the position to the mouse clicked position.
+    def mousePressEvent(self, event):
+        super(Slider, self).mousePressEvent(event)
+        if event.button() == QtCore.Qt.LeftButton:
+            val = self.pixelPosToRangeValue(event.pos())
+            self.setValue(val)
+
+    def pixelPosToRangeValue(self, pos):
+        opt = QtWidgets.QStyleOptionSlider()
+        self.initStyleOption(opt)
+        gr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderGroove, self)
+        sr = self.style().subControlRect(QtWidgets.QStyle.CC_Slider, opt, QtWidgets.QStyle.SC_SliderHandle, self)
+
+        if self.orientation() == QtCore.Qt.Horizontal:
+            slider_length = sr.width()
+            slider_min = gr.x()
+            slider_max = gr.right() - slider_length + 1
+        else:
+            slider_length = sr.height()
+            slider_min = gr.y()
+            slider_max = gr.bottom() - slider_length + 1;
+        pr = pos - sr.center() + sr.topLeft()
+        p = pr.x() if self.orientation() == QtCore.Qt.Horizontal else pr.y()
+        return QtWidgets.QStyle.sliderValueFromPosition(self.minimum(), self.maximum(), p - slider_min,
+                                                        slider_max - slider_min, opt.upsideDown)
