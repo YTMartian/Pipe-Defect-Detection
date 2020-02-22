@@ -37,8 +37,8 @@ class MainWindow(QMainWindow):
         self.is_edit_defect = 1
 
         # DEBUG.
-        edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
-        edit.show()
+        # edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
+        # edit.show()
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -1037,7 +1037,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     splash = QtWidgets.QSplashScreen(QtGui.QPixmap(':/launch'))  # launch interface.
     splash.show()
-    time.sleep(0.1)
+    time.sleep(2)
     QtWidgets.qApp.processEvents()
     win = MainWindow()
     win.show()

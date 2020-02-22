@@ -6,6 +6,10 @@ import os
 
 
 class Database:
+    # if defect_type_id is in [1,2,4,6,7,10,11,13,14,15],then it is a structure defect.
+    structure_defect_types = ['AJ', 'BX', 'CK', 'CR', 'FS', 'PL', 'QF', 'SL', 'TJ', 'TL']
+    function_defect_types = ['CJ', 'CQ', 'FZ', 'JG', 'SG', 'ZW']
+
     def __init__(self):
         self.conn = None
         self.host = 'localhost'
@@ -234,6 +238,82 @@ class Database:
             res.append(temp.copy())
         return res
 
+    def get_defect2(self, video_id):
+        cursor = self.conn.cursor()
+        if video_id is None:
+            cursor.execute("SELECT * FROM defect")
+        else:
+            cursor.execute("SELECT * FROM defect WHERE video_id = {}".format(video_id))
+        self.conn.commit()
+        data = cursor.fetchall()
+        cursor.close()
+        res = []
+        for i in data:
+            temp = {}
+            temp['defect_id'] = i[0]
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "SELECT road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,pipe_diameter,record_date FROM video WHERE video_id = {}".format(
+                    str(i[1])))
+            self.conn.commit()
+            video_data = cursor.fetchall()
+            temp['road_name'] = str(video_data[0][0])
+            temp['start_manhole_id'] = video_data[0][1]
+            temp['end_manhole_id'] = video_data[0][2]
+            start_manhole_no = self.get_name('manhole', str(temp['start_manhole_id']))
+            end_manhole_no = self.get_name('manhole', str(temp['end_manhole_id']))
+            temp['pipe_number'] = str(start_manhole_no) + '~' + str(end_manhole_no)
+            temp['pipe_type_id'] = video_data[0][3]
+            temp['pipe_material_id'] = video_data[0][4]
+            temp['pipe_diameter'] = video_data[0][5]
+            temp['defect_type_id'] = i[3]
+            temp['defect_grade_id'] = i[8]
+            temp['defect_attribute'] = i[11]
+            temp['time_in_video'] = i[2]
+            temp['record_date'] = str(video_data[0][6])
+            temp['interpretation_date'] = str(i[10])
+            temp['defect_distance'] = str(i[4])
+            temp['defect_length'] = str(i[5])
+
+            temp['pipe_type'] = self.get_name('pipe_type', temp['pipe_type_id'])
+            temp['pipe_material'] = self.get_name('pipe_material', temp['pipe_material_id'])
+            temp['defect_type'] = self.get_name('defect_type', temp['defect_type_id'])
+            temp['defect_grade'] = self.get_name('defect_grade', temp['defect_grade_id'])
+            temp['score'] = self.get_defect_score(temp['defect_grade_id'])
+
+            res.append(temp.copy())
+        return res
+
+    def get_defect_score(self, defect_grade_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT score FROM defect_grade WHERE defect_grade_id={}".format(defect_grade_id))
+            self.conn.commit()
+            data = cursor.fetchall()
+            return data[0][0]
+        except:
+            print('get defect score failed.')
+
+    def get_regional_value(self, regional_importance_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT regional_value FROM regional WHERE regional_id={}".format(regional_importance_id))
+            self.conn.commit()
+            data = cursor.fetchall()
+            return data[0][0]
+        except:
+            print('get regional value failed.')
+
+    def get_soil_value(self, soil_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT soil_value FROM soil WHERE soil_id={}".format(soil_id))
+            self.conn.commit()
+            data = cursor.fetchall()
+            return data[0][0]
+        except:
+            print('get soil value failed.')
+
     # get id and name of staff,detection,move,plugging,drainage,dredging.
     # also tables in video.
     def get_one_table(self, table):
@@ -439,7 +519,9 @@ class Database:
             res['detection_direction'] = data[0][15] if data[0][15] is not None else 0
             res['construction_year'] = data[0][16]
             res['regional_importance_id'] = data[0][17]
+            res['regional_value'] = self.get_regional_value(res['regional_importance_id'])
             res['soil_id'] = data[0][18]
+            res['soil_value'] = self.get_soil_value(res['soil_id'])
             res['video_remark'] = data[0][19]
             res['video_name'] = data[0][20]
             res['import_date'] = str(data[0][21])
@@ -676,10 +758,7 @@ class Database:
                    'pipe_with_function_defect_amount': 0, 'pipe_with_both_defect_amount': 0,
                    'pipe_without_defect_amount': 0, 'pipe_defects': [], 'defects_count': {}}
             number = 1
-            # if defect_type_id is in [1,2,4,6,7,10,11,13,14,15],then it is a structure defect.
-            structure_defect_types = ['AJ', 'BX', 'CK', 'CR', 'FS', 'PL', 'QF', 'SL', 'TJ', 'TL']
-            function_defect_types = ['CJ', 'CQ', 'FZ', 'JG', 'SG', 'ZW']
-            for i in structure_defect_types + function_defect_types:
+            for i in self.structure_defect_types + self.function_defect_types:
                 for j in range(1, 5):
                     res['defects_count'][i + str(j)] = 0
                     res['defects_count']['grade' + str(j)] = 0
@@ -704,13 +783,13 @@ class Database:
                 with_function_flag = False
                 for defect in defects:
                     t = {'defect_distance': defect[12], 'defect_grade': defect[7][0],
-                         'defect_type': defect[6][3:len(defect[6]) - 1],'defect_length':defect[13]}
+                         'defect_type': defect[6][3:len(defect[6]) - 1], 'defect_length': defect[13]}
                     defect_type_code = defect[6][0:2]
                     res['defects_count'][defect_type_code + str(t['defect_grade'])] += 1
                     res['defects_count'][defect_type_code + 'total'] += 1
                     res['defects_count']['grade' + str(t['defect_grade'])] += 1
                     res['defects_count']['grade_total'] += 1
-                    if defect_type_code in structure_defect_types:
+                    if defect_type_code in self.structure_defect_types:
                         temp['structure_defects'].append(t.copy())
                         if flag:
                             res['pipe_with_defect_amount'] += 1
@@ -749,16 +828,144 @@ class Database:
                     0]
                 data['defects'] = []
                 data['defect_frames'] = []
-                defects = self.get_defect(video[0])
+                # structure and function defect.
+                data['structure_average_score'] = 0
+                data['function_average_score'] = 0
+                data['structure_F'] = 0
+                data['function_G'] = 0
+                data['structure_SM'] = 0
+                data['function_YM'] = 0
+                data['structure_RI'] = 0
+                data['function_MI'] = 0
+                K = data['regional_value']
+                E = data['pipe_diameter']
+                if E > 1500:
+                    E = 10
+                elif E > 1000:
+                    E = 6
+                elif E > 600:
+                    E = 3
+                else:
+                    E = 0
+                T = data['soil_value']
+                alpha = 1.1
+                structure_n1, structure_n2 = 0, 0
+                function_n1, function_n2 = 0, 0
+                data['structure_max_score'] = 0
+                data['function_max_score'] = 0
+                data['structure_evaluation'] = ''
+                data['function_evaluation'] = ''
+                defects = self.get_defect2(video[0])
                 number = 1
                 for defect in defects:
-                    temp = {'number': number, 'defect_distance': defect[12], 'defect_type': defect[6],
-                            'defect_attribute': defect[8], 'time_in_video': defect[9]}
+                    if defect['defect_type'][:2] in self.structure_defect_types:
+                        if float(defect['defect_distance']) > 1.5:
+                            data['structure_average_score'] += float(defect['score'])
+                            data['structure_SM'] += float(defect['score']) * float(defect['defect_length'])
+                            structure_n1 += 1
+                        elif float(defect['defect_distance']) > 1.0:
+                            data['structure_average_score'] += alpha * float(defect['score'])
+                            data['structure_SM'] += alpha * float(defect['score']) * float(defect['defect_length'])
+                            structure_n2 += 1
+                        data['structure_max_score'] = max(data['structure_max_score'], float(defect['score']))
+                    elif defect['defect_type'][:2] in self.function_defect_types:
+                        if float(defect['defect_distance']) > 1.5:
+                            data['function_average_score'] += float(defect['score'])
+                            data['function_YM'] += float(defect['score']) * float(defect['defect_length'])
+                            function_n1 += 1
+                        elif float(defect['defect_distance']) > 1.0:
+                            data['function_average_score'] += alpha * float(defect['score'])
+                            data['function_YM'] += alpha * float(defect['score']) * float(defect['defect_length'])
+                            function_n2 += 1
+                        data['function_max_score'] = max(data['function_max_score'], float(defect['score']))
+
+                    temp = {'number': number, 'defect_distance': str(defect['defect_distance']),
+                            'defect_type': str(defect['defect_type']),
+                            'defect_attribute': str(defect['defect_attribute']),
+                            'time_in_video': str(defect['time_in_video']),
+                            'score': str(defect['score']), 'grade': str(defect['defect_grade'])[:2]}  # should be str.
                     number += 1
                     data['defects'].append(temp.copy())
+
+                data['structure_F'] = max(data['structure_average_score'], data['structure_max_score'])
+                data['function_G'] = max(data['function_average_score'], data['function_max_score'])
+
+                data['structure_RI'] = 0.7 * data['structure_F'] + 0.1 * K + 0.05 * E + 0.15 * T
+                data['function_MI'] = 0.8 * data['function_G'] + 0.15 * K + 0.05 * E
+
+                if data['structure_average_score'] * float(data['pipe_length']) != 0.0:
+                    data['structure_SM'] /= data['structure_average_score'] * float(data['pipe_length'])
+                if data['function_average_score'] * float(data['pipe_length']) != 0.0:
+                    data['function_YM'] /= data['function_average_score'] * float(data['pipe_length'])
+
+                if structure_n1 + structure_n2 > 0:
+                    data['structure_average_score'] /= structure_n1 + structure_n2
+                if function_n1 + function_n2 > 0:
+                    data['function_average_score'] /= function_n1 + function_n2
+
+                if data['structure_SM'] < 0.1:
+                    data['structure_evaluation'] += '(局部缺陷)'
+                elif data['structure_SM'] < 0.5:
+                    data['structure_evaluation'] += '(部分或整体缺陷)'
+                else:
+                    data['structure_evaluation'] += '(整体缺陷)'
+                if data['function_YM'] < 0.1:
+                    data['function_evaluation'] += '(局部缺陷)'
+                elif data['function_YM'] < 0.5:
+                    data['function_evaluation'] += '(部分或整体缺陷)'
+                else:
+                    data['function_evaluation'] += '(整体缺陷)'
+
+                if data['structure_F'] <= 1:
+                    data['structure_defect_grade'] = 'Ⅰ'
+                    data['structure_evaluation'] += '无或有轻微缺陷，结构状况基本不受影响，但具有潜在变坏的可能。'
+                elif data['structure_F'] <= 3:
+                    data['structure_defect_grade'] = 'Ⅱ'
+                    data['structure_evaluation'] += '管段缺陷明显超过一级，具有变坏的趋势。'
+                elif data['structure_F'] <= 6:
+                    data['structure_defect_grade'] = 'Ⅲ'
+                    data['structure_evaluation'] += '管段缺陷严重，结构状况受到影响。'
+                else:
+                    data['structure_defect_grade'] = 'Ⅳ'
+                    data['structure_evaluation'] += '管段存在重大缺陷，损坏严重或即将导致破坏。'
+                if data['function_G'] <= 1:
+                    data['function_defect_grade'] = 'Ⅰ'
+                    data['function_evaluation'] += '无或有轻微影响，管道运行基本不受影响。'
+                elif data['function_G'] <= 3:
+                    data['function_defect_grade'] = 'Ⅱ'
+                    data['function_evaluation'] += '管道过流有一定的受阻，运行受影响不大。'
+                elif data['function_G'] <= 6:
+                    data['function_defect_grade'] = 'Ⅲ'
+                    data['function_evaluation'] += '管道过流受阻比较严重，运行受到明显影响。'
+                else:
+                    data['function_defect_grade'] = 'Ⅳ'
+                    data['function_evaluation'] += '管道过流受阻很严重，即将或已经导致运行瘫痪。'
+                if data['structure_RI'] <= 1:
+                    data['structure_evaluation'] += '结构条件基本完好，不修复。'
+                elif data['structure_RI'] <= 4:
+                    data['structure_evaluation'] += '结构在短期内不会发生破坏现象，但应做修复计划 。'
+                elif data['structure_RI'] <= 7:
+                    data['structure_evaluation'] += '结构在短期内可能会发生破坏，应尽快修复。'
+                else:
+                    data['structure_evaluation'] += '结构已经发生或即将发生破坏，应立即修复。'
+                if data['function_MI'] <= 1:
+                    data['function_evaluation'] += '没有明显需要处理的缺陷。'
+                elif data['function_MI'] <= 4:
+                    data['function_evaluation'] += '没有立即进行处理的必要，但宜安排处理计划。'
+                elif data['function_MI'] <= 7:
+                    data['function_evaluation'] += '根据基础数据进行全面的考虑，应尽快处理。'
+                else:
+                    data['function_evaluation'] += '输水功能受到严重影响，应立即进行处理。'
+
+                data['structure_RI'] = '%.2f' % data['structure_RI']
+                data['function_MI'] = '%.2f' % data['function_MI']
+                data['structure_SM'] = '%.2f' % data['structure_SM']
+                data['function_YM'] = '%.2f' % data['function_YM']
+                data['structure_average_score'] = '%.2f' % data['structure_average_score']
+                data['function_average_score'] = '%.2f' % data['function_average_score']
 
                 res.append(data.copy())
             return res
         except:
             print('get videos failed.')
-            return []
+            return False
