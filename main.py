@@ -5,14 +5,21 @@ from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPus
 from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from tkinter import filedialog
 from PyQt5 import QtWidgets
+from torch.autograd import Variable
+from torchvision import transforms
 from PyQt5 import QtGui
 from resources import *
 from database import *
 from tkinter import *
+from models import *
+from utils import *
 from edit import *
 from word import *
+from PIL import Image
+import torchvision
 import datetime
 import settings
+import torch
 import time
 import sys
 import os
@@ -35,6 +42,8 @@ class MainWindow(QMainWindow):
         self.edit_project_id = None
         self.is_edit_video = 0
         self.is_edit_defect = 1
+
+        self.load_model()
 
         # DEBUG.
         # edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
@@ -382,6 +391,73 @@ class MainWindow(QMainWindow):
         self.add_project_tables = []  # table: staff,detection,move,plugging,drainage,dredging.
 
         self.hide_all()
+
+    def load_model(self):
+        # load two classification model.
+        # 0 is abnormal and 1 is normal.
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize((.5, .5, .5), (.5, .5, .5)),
+        ])
+        self.two_classes_model = torch.load('model/mobilebetv2-model.pth').cuda()
+        self.two_classes_model.eval().cuda()
+
+        # load yolov3 model.
+        img_size = 416
+        weights = 'model/yolov3.pt'
+        cfg = 'model/yolov3-spp.cfg'
+        self.names = 'model/my.names'
+        # Initialize model
+        self.yolov3_model = Darknet(cfg, img_size)
+
+        # Load weights
+        attempt_download(weights)
+        self.yolov3_model.load_state_dict(torch.load(weights, map_location='cuda:0')['model'])
+
+        # Eval mode
+        self.yolov3_model.eval().cuda()
+
+        # Get names and colors
+        names = load_classes(names)
+        colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
+
+    def yolov3_detect(self, img0):
+        # Padded resize
+        img = letterbox(img0, new_shape=img_size)[0]
+
+        # Convert
+        img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+        img = np.ascontiguousarray(img, dtype=np.float32)  # uint8 to fp16/fp32
+        img /= 255.0  # 0 - 255 to 0.0 - 1.0
+
+        # Get detections
+        img = torch.from_numpy(img).cuda()
+        if img.ndimension() == 3:
+            img = img.unsqueeze(0)
+        pred = model(img)[0]
+
+        # Apply NMS
+        pred = non_max_suppression(pred, conf_thres=0.3)
+
+        # Process detections
+        for i, det in enumerate(pred):  # detections per image
+
+            s = '%gx%g ' % img.shape[2:]  # print string
+            if det is not None and len(det):
+                # Rescale boxes from img_size to im0 size
+                det[:, :4] = scale_coords(img.shape[2:], det[:, :4], img0.shape).round()
+
+                # Print results
+                for c in det[:, -1].unique():
+                    n = (det[:, -1] == c).sum()  # detections per class
+                    s += '%g %ss, ' % (n, names[int(c)])  # add to string
+
+                # Write results
+                for *xyxy, conf, cls in det:
+                    label = '%s %.2f' % (names[int(cls)], conf)
+                    plot_one_box(xyxy, img0, label=label, color=colors[int(cls)])
+        return img0
 
     @staticmethod
     def top_close_clicked():
@@ -1037,7 +1113,6 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     splash = QtWidgets.QSplashScreen(QtGui.QPixmap(':/launch'))  # launch interface.
     splash.show()
-    time.sleep(2)
     QtWidgets.qApp.processEvents()
     win = MainWindow()
     win.show()

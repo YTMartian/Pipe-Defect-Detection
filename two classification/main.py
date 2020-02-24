@@ -73,7 +73,7 @@ for i in range(epochs):
     print('validation loss:{:.8f},validation acc:{:.8f}'.format(eval_loss / len(valSet), eval_acc / len(valSet)))
     if float(eval_acc / len(valSet)) > best:
         best = float(eval_acc / len(valSet))
-        torch.save(model, 'model.pth'.format(i))
+        torch.save(model.state_dict(), 'model.pt')  # state_dict():only save the weights.
         print('save in epoch ', i)
 
 print('time cost: {}s'.format(time.time() - start_time))

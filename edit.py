@@ -3,8 +3,11 @@ from PyQt5.QtWidgets import QDialog, QLabel, QPushButton, QScrollArea, QMainWind
 from PyQt5.QtGui import QIcon, QCursor, QPixmap, QImage, QPainter, QColor, QPen, QBrush
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QDate, QMutexLocker, QObject, QThread, QRect, pyqtSignal
+from torch.autograd import Variable
+from PIL import Image
 import functools
 import random
+import torch
 import time
 import cv2
 
@@ -36,6 +39,7 @@ class Edit(QMainWindow):
         self.video_frame_height = 0
         self.is_auto_detect = False
         self.initialization = 0
+        self.result = -1  # 0 is abnormal and 1 is normal.
 
         self.main_widget = QtWidgets.QWidget(self)  # must add widget to dialog.
         self.main_layout = QtWidgets.QGridLayout(self)
@@ -1276,8 +1280,20 @@ class Edit(QMainWindow):
         # get the current frame.
         self.video.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame_number)
         flag, img = self.video.read()  # if read successful, then flag is True.
-        if self.is_auto_detect:
+        if self.is_auto_detect and self.current_frame_number % 1 == 0:
+            # result = self.detect_one_frame(img)
+            img_ = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+            img_ = self.main_window.transform(img_).cuda()
+            img_.unsqueeze_(dim=0)
+            # self.main_window.two_classes_model.eval()
+            out = self.main_window.two_classes_model(img_)
+            self.result = int(torch.max(out, 1)[1].item())
+        if self.result == 0:  # normal.
             pass
+            # img = cv2.putText(img, "abnormal", (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        elif self.result == 1:  # abnormal.
+            pass
+            # img = cv2.putText(img, "normal", (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         height, width = img.shape[:2]
         if img.ndim == 3:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -1359,9 +1375,14 @@ class Edit(QMainWindow):
         if self.is_auto_detect:
             self.auto_button.setText('停止')
             self.auto_button.setIcon(QIcon(':/auto_stop'))
+            if not self.is_playing:
+                self.play_video()
+            self.timer.set_fps(15)
         else:
             self.auto_button.setText('自动检测')
             self.auto_button.setIcon(QIcon(':/auto'))
+            self.timer.set_fps(24)
+            self.result = -1
         self.draw_defect_marks_in_slider()
 
     def draw_defect_marks_in_slider(self, is_maximize=False):
