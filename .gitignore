@@ -1,6 +1,4 @@
 .idea
 __pycache__
 images
-model/*.pth
-model/*.pt
-model/*.weights
+model
