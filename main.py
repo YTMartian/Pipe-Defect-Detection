@@ -7,12 +7,13 @@ from tkinter import filedialog
 from PyQt5 import QtWidgets
 from torch.autograd import Variable
 from torchvision import transforms
+from utils.datasets import *
+from utils.utils import *
 from PyQt5 import QtGui
 from resources import *
 from database import *
 from tkinter import *
 from models import *
-from utils import *
 from edit import *
 from word import *
 from PIL import Image
@@ -43,11 +44,40 @@ class MainWindow(QMainWindow):
         self.is_edit_video = 0
         self.is_edit_defect = 1
 
-        self.load_model()
-
         # DEBUG.
-        # edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
-        # edit.show()
+        edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
+        edit.show()
+
+        # load two models.
+        # 0 is abnormal and 1 is normal.
+        self.transform = transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize((.5, .5, .5), (.5, .5, .5)),
+        ])
+        self.two_classes_model = torch.load('model/mobilebetv2.pth').cuda()
+        self.two_classes_model.eval().cuda()
+
+        # load yolov3 model.
+        self.img_size = 416
+        yolo = 'yolov3-tiny'
+        weights = 'model/{}.pt'.format(yolo)
+        cfg = 'model/{}.cfg'.format(yolo)
+        self.names = 'model/my.names'
+        # Initialize model
+        self.yolov3_model = Darknet(cfg, self.img_size)
+
+        # Load weights
+        attempt_download(weights)
+        self.yolov3_model.load_state_dict(torch.load(weights, map_location='cuda:0')['model'])
+
+        # Eval mode
+        self.yolov3_model.eval().cuda()
+
+        # Get names and colors
+        self.names = load_classes(self.names)
+        self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(self.names))]
+
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -392,39 +422,9 @@ class MainWindow(QMainWindow):
 
         self.hide_all()
 
-    def load_model(self):
-        # load two classification model.
-        # 0 is abnormal and 1 is normal.
-        self.transform = transforms.Compose([
-            transforms.Resize((224, 224)),
-            transforms.ToTensor(),
-            transforms.Normalize((.5, .5, .5), (.5, .5, .5)),
-        ])
-        self.two_classes_model = torch.load('model/mobilebetv2-model.pth').cuda()
-        self.two_classes_model.eval().cuda()
-
-        # load yolov3 model.
-        img_size = 416
-        weights = 'model/yolov3.pt'
-        cfg = 'model/yolov3-spp.cfg'
-        self.names = 'model/my.names'
-        # Initialize model
-        self.yolov3_model = Darknet(cfg, img_size)
-
-        # Load weights
-        attempt_download(weights)
-        self.yolov3_model.load_state_dict(torch.load(weights, map_location='cuda:0')['model'])
-
-        # Eval mode
-        self.yolov3_model.eval().cuda()
-
-        # Get names and colors
-        names = load_classes(names)
-        colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
-
     def yolov3_detect(self, img0):
         # Padded resize
-        img = letterbox(img0, new_shape=img_size)[0]
+        img = letterbox(img0, new_shape=self.img_size)[0]
 
         # Convert
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
@@ -435,10 +435,11 @@ class MainWindow(QMainWindow):
         img = torch.from_numpy(img).cuda()
         if img.ndimension() == 3:
             img = img.unsqueeze(0)
-        pred = model(img)[0]
+        pred = self.yolov3_model(img)[0]
 
         # Apply NMS
         pred = non_max_suppression(pred, conf_thres=0.3)
+        count = len(pred)
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
@@ -451,13 +452,13 @@ class MainWindow(QMainWindow):
                 # Print results
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
-                    s += '%g %ss, ' % (n, names[int(c)])  # add to string
+                    s += '%g %ss, ' % (n, self.names[int(c)])  # add to string
 
                 # Write results
                 for *xyxy, conf, cls in det:
-                    label = '%s %.2f' % (names[int(cls)], conf)
-                    plot_one_box(xyxy, img0, label=label, color=colors[int(cls)])
-        return img0
+                    label = '%s %.2f' % (self.names[int(cls)], conf)
+                    plot_one_box(xyxy, img0, label=label, color=self.colors[int(cls)])
+        return img0, count
 
     @staticmethod
     def top_close_clicked():
@@ -1115,6 +1116,7 @@ def main():
     splash.show()
     QtWidgets.qApp.processEvents()
     win = MainWindow()
+    os.system('python ./server/manage.py runserver')
     win.show()
     splash.finish(win)
     sys.exit(app.exec_())

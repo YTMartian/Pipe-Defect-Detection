@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from torchvision import transforms
 import matplotlib.pyplot as plt
+from ghost_mobilenetv2 import GhostMobileNetV2
 import numpy as np
 import torchvision
 import torch
@@ -12,10 +13,11 @@ batch_size = 32
 lr = 1e-3
 epochs = 120
 momentum = 0.9
-weight_decay = 1e-2
+weight_decay = 1e-3
+input_size = 224
 
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize((input_size, input_size)),
     transforms.ToTensor(),
     transforms.Normalize((.5, .5, .5), (.5, .5, .5)),
 ])
@@ -24,8 +26,9 @@ valSet = ImageFolder(root='data/val/', transform=transform)
 trainLoader = DataLoader(dataset=trainSet, batch_size=batch_size, shuffle=True)
 valLoader = DataLoader(dataset=valSet, batch_size=batch_size, shuffle=True)
 
-model = torchvision.models.MobileNetV2(num_classes=2).cuda()
+model = GhostMobileNetV2(num_classes=2, input_size=input_size).cuda()
 optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+# optimizer=torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 criterion = torch.nn.CrossEntropyLoss()
 
 log_train_loss = []
@@ -73,21 +76,21 @@ for i in range(epochs):
     print('validation loss:{:.8f},validation acc:{:.8f}'.format(eval_loss / len(valSet), eval_acc / len(valSet)))
     if float(eval_acc / len(valSet)) > best:
         best = float(eval_acc / len(valSet))
-        torch.save(model.state_dict(), 'model.pt')  # state_dict():only save the weights.
+        torch.save(model, 'model.pth')  # state_dict():only save the weights.
         print('save in epoch ', i)
 
 print('time cost: {}s'.format(time.time() - start_time))
 
-print(log_train_loss)
-print(log_train_accuracy)
-print(log_val_loss)
-print(log_val_accuracy)
+print('log_train_loss = ', log_train_loss)
+print('log_train_accuracy = ', log_train_accuracy)
+print('log_val_loss = ', log_val_loss)
+print('log_val_accuracy = ', log_val_accuracy)
 # set image size.
 F = plt.gcf()
 Size = F.get_size_inches()
 F.set_size_inches(Size[0] * 3, Size[1] * 3, forward=True)
 # set font.
-font = {'weight': 'normal', 'size': 32}
+font = {'weight': 'bold', 'size': 32, 'family': 'DengXian'}
 plt.rc('font', **font)
 # set margin.
 plt.subplots_adjust(hspace=0.22)
@@ -105,6 +108,7 @@ plt.plot(axis_x, log_val_accuracy, 'o-', label='test')
 plt.legend(bbox_to_anchor=(1, 0), loc=3, borderaxespad=0)
 plt.xlabel('Epochs', color='C0')
 plt.ylabel('Accuracy', color='C0')
+plt.ylim((0, 1.1))
 # to save the entire image.
 plt.savefig("result.jpg", dpi=300, bbox_inches='tight')
 plt.show()

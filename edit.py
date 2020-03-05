@@ -39,7 +39,8 @@ class Edit(QMainWindow):
         self.video_frame_height = 0
         self.is_auto_detect = False
         self.initialization = 0
-        self.result = -1  # 0 is abnormal and 1 is normal.
+        self.result = 1  # 0 is abnormal and 1 is normal.
+        self.jump_frame = 0  # if a frame has defects, then don't detect the following jump_frame frames.
 
         self.main_widget = QtWidgets.QWidget(self)  # must add widget to dialog.
         self.main_layout = QtWidgets.QGridLayout(self)
@@ -541,7 +542,7 @@ class Edit(QMainWindow):
         self.manual_button.setIcon(QIcon(':/manual'))
         self.manual_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.manual_button.clicked.connect(self.manual)
-        self.manual_button.setText('手动标记')
+        self.manual_button.setText('标记')
         self.manual_button.setStyleSheet('''
             QPushButton{
                 font-weight:bold;
@@ -559,7 +560,7 @@ class Edit(QMainWindow):
         self.auto_button.setIcon(QIcon(':/auto'))
         self.auto_button.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.auto_button.clicked.connect(self.auto)
-        self.auto_button.setText('自动检测')
+        self.auto_button.setText('检测')
         self.auto_button.setStyleSheet('''
             QPushButton{
                 font-weight:bold;
@@ -1185,6 +1186,8 @@ class Edit(QMainWindow):
         if not self.is_playing:
             self.play_button.setIcon(QIcon(':/play'))
             self.timer.stop()
+            if self.is_auto_detect:
+                self.auto()
         else:
             self.play_button.setIcon(QIcon(':/pause'))
             self.timer.start()
@@ -1280,7 +1283,8 @@ class Edit(QMainWindow):
         # get the current frame.
         self.video.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame_number)
         flag, img = self.video.read()  # if read successful, then flag is True.
-        if self.is_auto_detect and self.current_frame_number % 1 == 0:
+        self.jump_frame = self.jump_frame - 1 if self.jump_frame > 0 else 0
+        if self.is_auto_detect and self.jump_frame == 0:
             # result = self.detect_one_frame(img)
             img_ = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             img_ = self.main_window.transform(img_).cuda()
@@ -1288,12 +1292,18 @@ class Edit(QMainWindow):
             # self.main_window.two_classes_model.eval()
             out = self.main_window.two_classes_model(img_)
             self.result = int(torch.max(out, 1)[1].item())
-        if self.result == 0:  # normal.
-            pass
-            # img = cv2.putText(img, "abnormal", (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-        elif self.result == 1:  # abnormal.
-            pass
+        if self.result == 0:  # abnormal.
+            # self.timer.stop()
+            img, count = self.main_window.yolov3_detect(img)
+            # self.timer.start()
+            # if count > 0:
+            #     self.jump_frame = self.timer.fps * 10
+            # else:
+            #     self.result = 1
+            #     self.timer.start()
+        elif self.result == 1:  # normal.
             # img = cv2.putText(img, "normal", (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            pass
         height, width = img.shape[:2]
         if img.ndim == 3:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -1314,12 +1324,18 @@ class Edit(QMainWindow):
         if self.current_frame_number == self.total_frame_number:
             self.current_frame_number = 1
             self.play_video()
+            self.is_auto_detect = False
             return
         image = self.get_current_frame()
         image = image.scaled(self.new_frame_width, self.new_frame_height)
         self.video_frame.setPixmap(image)
         if self.is_playing and self.current_frame_number < self.total_frame_number:
             self.current_frame_number += 1
+        # if self.result == 0:
+        #     if self.is_playing:
+        #         self.play_video()
+        #         if self.is_auto_detect:
+        #             self.auto()
 
     def slide_frame(self):
         self.current_frame_number = self.slider.value()
@@ -1479,6 +1495,7 @@ class VideoTimer(QThread):
         self.fps = fps
         self.timeSignal = Communicate()
         self.mutex = QtCore.QMutex()
+        # self.sleep_time = 0
 
     def run(self):
         with QMutexLocker(self.mutex):
@@ -1486,6 +1503,8 @@ class VideoTimer(QThread):
         while True:
             if self.stopped:
                 return
+            # time.sleep(self.sleep_time)
+            # self.sleep_time = 0
             self.timeSignal.signal.emit('')
             time.sleep(1 / self.fps)
 
@@ -1499,6 +1518,9 @@ class VideoTimer(QThread):
 
     def set_fps(self, fps):
         self.fps = fps
+    #
+    # def set_sleep(self, sleep_time):
+    #     self.sleep_time = sleep_time
 
 
 # https://stackoverflow.com/questions/52689047/moving-qslider-to-mouse-click-position

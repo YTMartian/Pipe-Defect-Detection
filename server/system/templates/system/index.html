@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8" http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="icon" href="{% static 'fonts/label.ico' %}" type="image/x-icon">
+    <title>HOME</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'js/jquery-1.10.2.js' %}"></script>
+    <script type="text/javascript"
+            src="https://webapi.amap.com/maps?v=1.4.15&key=2af1be0baa7e3ffb1797f22a848eae24"></script>
+</head>
+<body style="overflow: hidden">
+<div style="text-align: center">
+    <div id="container" class="show_area"></div>
+    <img id="show-image" class="show_area" width="700" height="600">
+    {#    <canvas id="canvas"  style="visibility: hidden"></canvas>#}
+</div>
+<script>
+    var map = new AMap.Map('container', {
+        zoom: 11,//级别
+        expandZoomRange: true,//扩大缩放级别，最大20级
+        zooms: [3, 20],
+        center: [116.397428, 39.90923],//中心点坐标
+        pitch: 0,
+        viewMode: '3D',//使用3D视图
+        {#mapStyle: 'amap://styles/macaron',//地图样式#}
+    });
+
+</script>
+<script>
+    function handle() {
+        // 右侧显示图像
+        let request = $.ajax({
+            url: 'http://127.0.0.1:8000/system/handle/',//最后要加上'/'
+            type: 'GET',
+            async: true,
+            timeout: 7000,
+            error: function () {
+                {#window.alert("出错了")#}
+            },
+            complete: function (XMLHttpRequest, status) {
+                if (status === 'timeout') {
+                    request.abort();
+                    {#window.alert('连接超时')#}
+                }
+            },
+            success: function () {
+                let data = request.responseText;
+                $('#show-image').attr('src', "data:image/png;base64," + data);
+            }
+        });
+        //左侧地图中显示轨迹
+    }
+
+    function handleFrames() {
+        window.setInterval("handle()", 5000)//每隔一段时间执行一次函数
+    }
+
+    window.onload = handleFrames
+
+
+</script>
+</body>
+</html>

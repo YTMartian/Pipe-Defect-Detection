@@ -1,0 +1,25 @@
+body {
+    background-attachment: fixed;
+    background-image: url("../images/background.svg");
+    background-size: cover;
+    background-position: center;
+    -webkit-background-size: cover; /* 兼容Webkit内核浏览器如Chrome和Safari */
+    -o-background-size: cover; /* 兼容Opera */
+    -moz-background-size: cover;
+}
+
+.show_area {
+    -webkit-box-shadow: 15px 9px 61px 1px rgba(0, 0, 0, 0.54);
+    -moz-box-shadow: 15px 9px 61px 1px rgba(0, 0, 0, 0.54);
+    box-shadow: 15px 9px 61px 1px rgba(0, 0, 0, 0.54);
+    margin-top: 2%;
+    border: 10px solid #fff9fc;
+    width:700px;
+    height:600px;
+    display: inline-block;/*并排显示*/
+}
+
+#show-image {
+    margin-left: 1%;
+    border: 10px solid #fff9fc;
+}

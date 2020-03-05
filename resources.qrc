@@ -38,6 +38,7 @@
 <file alias="delete">resources/delete.png</file>
 <file alias="auto_stop">resources/auto_stop.png</file>
 <file alias="launch">resources/launch.png</file>
+<file alias="camera">resources/camera.png</file>
 
 </qresource>
 </RCC>
