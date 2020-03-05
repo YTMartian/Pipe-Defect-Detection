@@ -39,6 +39,7 @@
 <file alias="auto_stop">resources/auto_stop.png</file>
 <file alias="launch">resources/launch.png</file>
 <file alias="camera">resources/camera.png</file>
+<file alias="robot">resources/robot.png</file>
 
 </qresource>
 </RCC>

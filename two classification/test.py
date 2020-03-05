@@ -33,6 +33,8 @@ for i in range(0, total_frame_number):
         out = model(img)
         # print(torch.max(out, 1)[1].item())
         res[torch.max(out, 1)[1].item()] += 1
+        if i == 500:
+            break
     except:
         print('frame {} failed.'.format(i))
 # images = glob.glob('data/val/normal/*')
@@ -49,4 +51,4 @@ for i in range(0, total_frame_number):
 print(res)
 time_cost = time.time() - start
 print(time_cost, 's')
-print('fps:{:.1f}'.format(total_frame_number / time_cost))
+print('fps:{:.1f}'.format(500 / time_cost))

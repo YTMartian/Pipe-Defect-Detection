@@ -18,6 +18,7 @@ from edit import *
 from word import *
 from PIL import Image
 import torchvision
+import threading
 import datetime
 import settings
 import torch
@@ -45,8 +46,8 @@ class MainWindow(QMainWindow):
         self.is_edit_defect = 1
 
         # DEBUG.
-        edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
-        edit.show()
+        # edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
+        # edit.show()
 
         # load two models.
         # 0 is abnormal and 1 is normal.
@@ -77,7 +78,6 @@ class MainWindow(QMainWindow):
         # Get names and colors
         self.names = load_classes(self.names)
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(self.names))]
-
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)  # set background transparent.
         self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # hide the frame.
@@ -462,8 +462,16 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def top_close_clicked():
-        time.sleep(0.1)  # so...
-        exit()
+        # use command to kill the django server process and the main window
+        # or the software will be stuck.
+        result = os.popen('tasklist | findstr python')
+        res = result.read()
+        for line in res.splitlines():
+            line = line.split()
+            pid = line[1]
+            _ = os.popen('taskkill /pid {} /f'.format(pid))
+            print(_)
+        exit(0)
 
     def top_maximize_clicked(self):
         if self.isMaximized():
@@ -1110,13 +1118,30 @@ class MainWindow(QMainWindow):
         QtWidgets.QMessageBox.information(self, '提示', '生成成功' if flag else '生成失败')
 
 
+def run_django():
+    os.system('python ./server/manage.py runserver')
+
+
+class DjangoThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
+        self.running = True
+
+    def run(self):
+        if self.running:
+            run_django()
+        self.running = False
+        time.sleep(1)
+
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
     splash = QtWidgets.QSplashScreen(QtGui.QPixmap(':/launch'))  # launch interface.
     splash.show()
     QtWidgets.qApp.processEvents()
+    server = DjangoThread()
+    server.start()
     win = MainWindow()
-    os.system('python ./server/manage.py runserver')
     win.show()
     splash.finish(win)
     sys.exit(app.exec_())
