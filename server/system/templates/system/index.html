@@ -17,16 +17,30 @@
     {#    <canvas id="canvas"  style="visibility: hidden"></canvas>#}
 </div>
 <script>
+    //it's google map format.
+    var longitude = 116.397428;
+    var latitude = 39.90923;
+
+
     var map = new AMap.Map('container', {
-        zoom: 11,//级别
+        zoom: 12,//级别
         expandZoomRange: true,//扩大缩放级别，最大20级
         zooms: [3, 20],
-        center: [116.397428, 39.90923],//中心点坐标
+        center: [longitude, latitude],//中心点坐标
         pitch: 0,
         viewMode: '3D',//使用3D视图
         {#mapStyle: 'amap://styles/macaron',//地图样式#}
     });
-
+    //one meter is approximately 0.0000009 degree.
+    var meter = 0.0000009;
+    var lines = [];
+    var polyLine = new AMap.Polyline({
+        //折线的节点坐标数组
+        path: [[longitude, latitude]],
+        map: map,
+        strokeColor: "#5fd932",  //线颜色
+        strokeWeight: 4,      //线宽
+    });
 </script>
 <script>
     function handle() {
@@ -51,10 +65,26 @@
             }
         });
         //左侧地图中显示轨迹
+        longitude += (Math.random() - 0.5) / 1000;
+        latitude += (Math.random() - 0.5) / 1000;
+        lines.push([longitude, latitude]);
+        //设置路径，动态绘制
+        polyLine.setPath(lines);
+        //如果是abnormal的，标红
+        if (Math.random() > 0.7) {
+            new AMap.Polyline({
+                //折线的节点坐标数组
+                path: lines.slice(lines.length-2),
+                map: map,
+                strokeColor: "#d92414",  //线颜色
+                strokeWeight: 4,      //线宽
+            });
+        }
+
     }
 
     function handleFrames() {
-        window.setInterval("handle()", 5000)//每隔一段时间执行一次函数
+        window.setInterval("handle()", 500)//每隔一段时间执行一次函数
     }
 
     window.onload = handleFrames

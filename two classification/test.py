@@ -17,7 +17,7 @@ transform = transforms.Compose([
 ])
 # model = torchvision.models.vgg16(num_classes=2).cuda()
 # model.load_state_dict(torch.load('results/vgg16-model.pt'))
-model = torch.load('results/mobilebetv2-model.pth').cuda()
+model = torch.load('results/results2/mobilenetv2-result.pth').cuda()
 model.eval().cuda()
 start = time.time()
 res = {0: 0, 1: 0}  # 0 is abnormal and 1 is normal.

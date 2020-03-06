@@ -1,4 +1,5 @@
-from PyQt5.QtCore import QDate
+from PyQt5.QtCore import QDate, QUrl
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
     QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu, \
     QComboBox, QCalendarWidget, QDateEdit, QMessageBox
@@ -234,26 +235,31 @@ class MainWindow(QMainWindow):
         self.app.setPixmap(QPixmap(':/app'))
         self.app.setContentsMargins(0, 20, 0, 0)
         self.left_layout.addWidget(self.app, 1, 0, 10, 10, QtCore.Qt.AlignTop)
-        self.managements = [QPushButton() for i in range(3)]
+        self.managements = [QPushButton() for i in range(4)]
         self.managements[0].setText('工程管理')
         self.managements[1].setText('视频管理')
         self.managements[2].setText('缺陷管理')
+        self.managements[3].setText('即时检测')
         self.managements[0].setIcon(QIcon(":/project_management"))  # add icon before text.
         self.managements[1].setIcon(QIcon(":/video_management"))
         self.managements[2].setIcon(QIcon(":/defect_management"))
-        for i in range(3):
+        self.managements[3].setIcon(QIcon(":/robot"))
+        for i in range(4):
             self.managements[i].setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.set_managements_style()
         self.managements[0].clicked.connect(self.all_managements)
         self.managements[1].clicked.connect(self.all_managements)
         self.managements[2].clicked.connect(self.all_managements)
+        self.managements[3].clicked.connect(self.all_managements)
         self.left_layout.addWidget(self.managements[0], 3, 5, 1, 1, QtCore.Qt.AlignCenter)
         self.left_layout.addWidget(self.managements[1], 4, 5, 1, 1, QtCore.Qt.AlignCenter)
         self.left_layout.addWidget(self.managements[2], 5, 5, 1, 1, QtCore.Qt.AlignCenter)
+        self.left_layout.addWidget(self.managements[3], 6, 5, 1, 1, QtCore.Qt.AlignCenter)
         self.management_flag = 0
         self.project_management_flag = 1
         self.video_management_flag = 2
         self.defect_management_flag = 3
+        self.robot_flag = 4
 
         self.search_input = QLineEdit()
         self.search_input.setToolTip('输入关键字搜索')
@@ -371,7 +377,7 @@ class MainWindow(QMainWindow):
         self.toggle_project_field.addWidget(self.cancel_button)
         self.toggle_project_field.addWidget(self.toggle_project_detailed_view)
         self.toggle_project_field.addWidget(self.toggle_project_statistic_view)
-        self.manage_layout.addWidget(self.toggle_project_widget, 5, 5, 10, 1)
+        self.manage_layout.addWidget(self.toggle_project_widget, 3, 5, 10, 1)
 
         # show table.
         # settings in:https://blog.csdn.net/yekui006/article/details/98211808
@@ -380,28 +386,46 @@ class MainWindow(QMainWindow):
 
         self.show_table.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         # self.show_table.horizontalHeader().setVisible(False)
-        self.show_table.verticalHeader().setVisible(False)  # hide teh header.
+        self.show_table.verticalHeader().setVisible(True)  # hide teh header.
         self.show_table.horizontalHeader().setStretchLastSection(True)
-        self.show_table.setShowGrid(False)
-        self.manage_layout.addWidget(self.show_table, 6, 2, 10, 10)
+        self.show_table.setShowGrid(True)
+        self.manage_layout.addWidget(self.show_table, 4, 2, 10, 10)
+        self.show_table.setCornerButtonEnabled(False)  # set the top-left corner.
+        self.show_table.horizontalHeader().setSectionsClickable(False)
+        self.show_table.verticalHeader().setSectionsClickable(False)
         self.show_table.setStyleSheet('''
             QWidget{
-                background:transparent;
+                background:white;
                 font-family:"DengXian";
                 font-size:18px;
                 font-weight:bold;
-                color:#f1f1f1;
-                selection-background-color:rgba(220,220,220,0.2);
+                color:#232323;
+                selection-background-color:#8FA0A9;
                 border:none;
-        }''')
+            }
+            QTableView QTableCornerButton::section {
+                background-color:#364A5F;
+            }
+        ''')
         # change header style:should add ::section.
         self.show_table.horizontalHeader().setStyleSheet('''
             QTableView QHeaderView::section{	
-                background-color:transparent;
-                font-size:14px;
+                background-color:#364A5F;
+                font-size:20px;
+                height:30px;
                 font-weight:bold;
-                color:rgba(200,200,200,0.9);
+                color:#FFFFFF;
+            }
 }       ''')
+        self.show_table.verticalHeader().setStyleSheet('''
+            QTableView QHeaderView::section{	
+                background-color:#364A5F;
+                font-size:20px;
+                width:30px;
+                font-weight:bold;
+                color:#FFFFFF;
+            }
+        ''')
         # set the column width auto to fix window width.
         # https://blog.csdn.net/yl_best/article/details/84070231
         self.show_table.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive | QHeaderView.Stretch)
@@ -420,7 +444,13 @@ class MainWindow(QMainWindow):
         # all of the ids and names in  ComboBox, e.g. the staff_id and staff_name.
         self.add_project_tables = []  # table: staff,detection,move,plugging,drainage,dredging.
 
+        self.browser = QWebEngineView()
+        self.manage_layout.addWidget(self.browser, 3, 2, 10, 10)
+
         self.hide_all()
+
+    def __del__(self):
+        self.top_close_clicked()
 
     def yolov3_detect(self, img0):
         # Padded resize
@@ -665,7 +695,7 @@ class MainWindow(QMainWindow):
         self.main_widget.setPalette(background)
 
     def set_managements_style(self):
-        for i in range(3):
+        for i in range(4):
             self.managements[i].setStyleSheet('''
                 QPushButton{
                     font-weight:bold;
@@ -700,12 +730,17 @@ class MainWindow(QMainWindow):
         elif sender == self.managements[1]:
             self.management_flag = self.video_management_flag
             self.video_management(None)
-        else:
+        elif sender == self.managements[2]:
             self.management_flag = self.defect_management_flag
             self.defect_management(None)
+        elif sender == self.managements[3]:
+            self.management_flag = self.robot_flag
+            self.robot_management()
 
     def project_management(self):
         self.hide_all()
+        self.search_button.setVisible(True)
+        self.search_input.setVisible(True)
         self.search_input.setPlaceholderText('搜索工程...')
         self.toggle_project_statistic_view.setVisible(True)
         self.toggle_project_detailed_view.setVisible(True)
@@ -714,6 +749,8 @@ class MainWindow(QMainWindow):
 
     def video_management(self, project_id):
         self.hide_all()
+        # self.search_button.setVisible(True)
+        # self.search_input.setVisible(True)
         self.search_input.setPlaceholderText('搜索视频...')
         self.show_table.setVisible(True)
         self.show_table.setColumnCount(8)
@@ -726,6 +763,8 @@ class MainWindow(QMainWindow):
 
     def defect_management(self, video_id):
         self.hide_all()
+        # self.search_button.setVisible(True)
+        # self.search_input.setVisible(True)
         self.search_input.setPlaceholderText('搜索缺陷...')
         self.show_table.setVisible(True)
         self.show_table.setColumnCount(11)
@@ -736,12 +775,24 @@ class MainWindow(QMainWindow):
         self.data = self.db.get_defect(video_id)
         self.insert_data_to_table()
 
+    def robot_management(self):
+        self.hide_all()
+        self.browser.setVisible(True)
+        self.browser.load(QUrl('http://127.0.0.1:8000/'))
+        self.browser.show()
+        if not self.isMaximized():
+            self.top_maximize_clicked()
+
     def hide_all(self):
         self.toggle_project_statistic_view.setVisible(False)
         self.toggle_project_detailed_view.setVisible(False)
         self.ensure_button.setVisible(False)
         self.cancel_button.setVisible(False)
         self.show_table.setVisible(False)
+        self.search_input.setVisible(False)
+        self.search_button.setVisible(False)
+        self.browser.setVisible(False)
+        self.browser.load(QUrl(''))
 
     def search(self):
         search_text = self.search_input.text()
@@ -765,8 +816,8 @@ class MainWindow(QMainWindow):
             self.show_table.setColumnCount(16)
             self.show_table.setRowCount(0)
             self.show_table.setHorizontalHeaderLabels((
-                '工程\n编号', '工程\n名称', '工程\n地址', '负责\n人员', '开工\n日期', '报告\n编号', '委托\n单位', '建设\n单位', '设计\n单位',
-                '施工\n单位', '监理\n单位', '检测\n类型', '移动\n方式', '封堵\n方式', '排水\n方式', '清疏\n方式'))
+                '工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '报告编号', '委托单位', '建设单位', '设计单位',
+                '施工单位', '监理单位', '检测类型', '移动方式', '封堵方式', '排水方式', '清疏方式'))
             self.resize_table_size_to_contents()
             self.data = self.db.get_project_detailed()
             self.insert_data_to_table()
