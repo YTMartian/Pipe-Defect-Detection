@@ -45,9 +45,13 @@ class Database:
         data = cursor.fetchall()
         return data[0][0]
 
-    def get_project_detailed(self):
+    def get_project_detailed(self, search_text=None):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM project")
+        if search_text is None:
+            cursor.execute("SELECT * FROM project")
+        else:
+            cursor.execute(
+                "SELECT * FROM project WHERE project_no LIKE '%{0}%' OR project_name LIKE '%{0}%'".format(search_text))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
@@ -78,9 +82,13 @@ class Database:
         res = [str(data[0][i]) for i in range(0, 18)]
         return res
 
-    def get_project_statistic(self):
+    def get_project_statistic(self, search_text=None):
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM project")
+        if search_text is None:
+            cursor.execute("SELECT * FROM project")
+        else:
+            cursor.execute(
+                "SELECT * FROM project WHERE project_no LIKE '%{0}%' OR project_name LIKE '%{0}%'".format(search_text))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()

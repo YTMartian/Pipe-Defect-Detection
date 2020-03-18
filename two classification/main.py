@@ -4,16 +4,19 @@ from torch.autograd import Variable
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from ghost_mobilenetv2 import GhostMobileNetV2
+from mobilenetv2_1 import MobileNetV2_1
+from mobilenetv3 import MobileNetV3
+from ghost_net import GhostNet
 import numpy as np
 import torchvision
 import torch
 import time
 
-batch_size = 32
+batch_size = 64
 lr = 1e-3
-epochs = 120
+epochs = 100
 momentum = 0.9
-weight_decay = 1e-3
+weight_decay = 1e-4
 input_size = 224
 
 transform = transforms.Compose([
@@ -26,7 +29,11 @@ valSet = ImageFolder(root='data/val/', transform=transform)
 trainLoader = DataLoader(dataset=trainSet, batch_size=batch_size, shuffle=True)
 valLoader = DataLoader(dataset=valSet, batch_size=batch_size, shuffle=True)
 
-model = GhostMobileNetV2(num_classes=2, input_size=input_size).cuda()
+model = MobileNetV2_1(num_classes=2).cuda()
+# model = GhostMobileNetV2(num_classes=2).cuda()
+# model = MobileNetV3(n_class=2, input_size=input_size, mode='small').cuda()
+# model = GhostNet(num_classes=2).cuda()
+# model = torchvision.models.MobileNetV2(num_classes=2).cuda()
 optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 # optimizer=torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 criterion = torch.nn.CrossEntropyLoss()
@@ -76,9 +83,9 @@ for i in range(epochs):
     print('validation loss:{:.8f},validation acc:{:.8f}'.format(eval_loss / len(valSet), eval_acc / len(valSet)))
     if float(eval_acc / len(valSet)) > best:
         best = float(eval_acc / len(valSet))
-        torch.save(model, 'model.pth')  # state_dict():only save the weights.
+        torch.save(model.state_dict(), 'best.weight')  # state_dict():only save the weights.
         print('save in epoch ', i)
-
+torch.save(model.state_dict(), 'last.weight')
 print('time cost: {}s'.format(time.time() - start_time))
 
 print('log_train_loss = ', log_train_loss)

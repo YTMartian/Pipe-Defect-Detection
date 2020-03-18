@@ -1,40 +1,5 @@
 from torch import nn
-import torch
 import math
-
-
-def depthwise_conv(inp, oup, kernel_size=3, stride=1, relu=False):
-    return nn.Sequential(
-        nn.Conv2d(inp, oup, kernel_size, stride, kernel_size // 2, groups=inp, bias=False),
-        nn.BatchNorm2d(oup),
-        nn.ReLU(inplace=True) if relu else nn.Sequential(),
-    )
-
-
-class GhostModule(nn.Module):
-    def __init__(self, inp, oup, kernel_size=1, ratio=2, dw_size=3, stride=1, relu=True):
-        super(GhostModule, self).__init__()
-        self.oup = oup
-        init_channels = math.ceil(oup / ratio)
-        new_channels = init_channels * (ratio - 1)
-
-        self.primary_conv = nn.Sequential(
-            nn.Conv2d(inp, init_channels, kernel_size, stride, kernel_size // 2, bias=False),
-            nn.BatchNorm2d(init_channels),
-            nn.ReLU(inplace=True) if relu else nn.Sequential(),
-        )
-
-        self.cheap_operation = nn.Sequential(
-            nn.Conv2d(init_channels, new_channels, dw_size, 1, dw_size // 2, groups=init_channels, bias=False),
-            nn.BatchNorm2d(new_channels),
-            nn.ReLU(inplace=True) if relu else nn.Sequential(),
-        )
-
-    def forward(self, x):
-        x1 = self.primary_conv(x)
-        x2 = self.cheap_operation(x1)
-        out = torch.cat([x1, x2], dim=1)
-        return out[:, :self.oup, :, :]
 
 
 def conv_bn(inp, oup, stride):
@@ -80,17 +45,14 @@ class InvertedResidual(nn.Module):
         else:
             self.conv = nn.Sequential(
                 # pw
-                GhostModule(inp, hidden_dim, kernel_size=1, relu=True),
-                # nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
-                # nn.BatchNorm2d(hidden_dim),
-                # nn.ReLU6(inplace=True),
+                nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
+                nn.BatchNorm2d(hidden_dim),
+                nn.ReLU6(inplace=True),
                 # dw
-                # depthwise_conv(hidden_dim, hidden_dim, 3, stride,relu=False) if stride == 2 else nn.Sequential(),
                 nn.Conv2d(hidden_dim, hidden_dim, 3, stride, 1, groups=hidden_dim, bias=False),
                 nn.BatchNorm2d(hidden_dim),
                 nn.ReLU6(inplace=True),
                 # pw-linear
-                # GhostModule(hidden_dim, oup, kernel_size=1, relu=False),
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
             )
@@ -102,9 +64,9 @@ class InvertedResidual(nn.Module):
             return self.conv(x)
 
 
-class GhostMobileNetV2(nn.Module):
+class MobileNetV2_1(nn.Module):
     def __init__(self, num_classes=1000, input_size=224, width_mult=1.):
-        super(GhostMobileNetV2, self).__init__()
+        super(MobileNetV2_1, self).__init__()
         block = InvertedResidual
         input_channel = 32
         last_channel = 1280

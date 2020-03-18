@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
 from tkinter import filedialog
 from PyQt5 import QtWidgets
 from torch.autograd import Variable
+from mobilenetv2_1 import MobileNetV2_1
 from torchvision import transforms
 from utils.datasets import *
 from utils.utils import *
@@ -57,7 +58,8 @@ class MainWindow(QMainWindow):
             transforms.ToTensor(),
             transforms.Normalize((.5, .5, .5), (.5, .5, .5)),
         ])
-        self.two_classes_model = torch.load('model/mobilebetv2.pth').cuda()
+        self.two_classes_model = MobileNetV2_1(num_classes=2).cuda()
+        self.two_classes_model.load_state_dict(torch.load('model/mobilenetv2_1.weight'))
         self.two_classes_model.eval().cuda()
 
         # load yolov3 model.
@@ -100,6 +102,7 @@ class MainWindow(QMainWindow):
         self.margin_right_top = 6
         self.margin_right_bottom = 7
         self.installEventFilter(self)
+        self.is_searching = False
 
         self.main_widget = QtWidgets.QWidget()  # main window.
         background = QtGui.QPalette()
@@ -400,7 +403,8 @@ class MainWindow(QMainWindow):
                 font-size:18px;
                 font-weight:bold;
                 color:#232323;
-                selection-background-color:#8FA0A9;
+                selection-background-color:#8aA0A9;
+                selection-color:#ffffff;
                 border:none;
             }
             QTableView QTableCornerButton::section {
@@ -410,7 +414,7 @@ class MainWindow(QMainWindow):
         # change header style:should add ::section.
         self.show_table.horizontalHeader().setStyleSheet('''
             QTableView QHeaderView::section{	
-                background-color:#364A5F;
+                background-color:#363A5F;
                 font-size:20px;
                 height:30px;
                 font-weight:bold;
@@ -800,7 +804,8 @@ class MainWindow(QMainWindow):
             QtWidgets.QMessageBox.information(self, '提示', '输入为空')
             return
         if self.management_flag == self.project_management_flag:  # search in project.
-            pass
+            self.is_searching = True
+            self.toggle_project_view()
         elif self.management_flag == self.video_management_flag:  # search in video.
             pass
         elif self.management_flag == self.defect_management_flag:  # search in defect.
@@ -819,7 +824,11 @@ class MainWindow(QMainWindow):
                 '工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '报告编号', '委托单位', '建设单位', '设计单位',
                 '施工单位', '监理单位', '检测类型', '移动方式', '封堵方式', '排水方式', '清疏方式'))
             self.resize_table_size_to_contents()
-            self.data = self.db.get_project_detailed()
+            if self.is_searching:
+                self.data = self.db.get_project_detailed(self.search_input.text())
+            else:
+                self.data = self.db.get_project_detailed()
+            self.is_searching = False
             self.insert_data_to_table()
         else:
             self.show_table.setColumnCount(10)
@@ -827,7 +836,11 @@ class MainWindow(QMainWindow):
             self.show_table.setHorizontalHeaderLabels(
                 ('工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '视频总数', '管道总数', '里程(KM)', '标内判读', '判读总数'))
             self.resize_table_size_to_contents()
-            self.data = self.db.get_project_statistic()
+            if self.is_searching:
+                self.data = self.db.get_project_statistic(self.search_input.text())
+            else:
+                self.data = self.db.get_project_statistic()
+            self.is_searching = False
             self.insert_data_to_table()
 
     def resize_table_size_to_contents(self):

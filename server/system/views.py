@@ -14,10 +14,20 @@ def index(request):
 获取并处理图像，返回结果
 """
 
+video = cv2.VideoCapture('F:/Graduation-Project/排水管道系统/PipeSight/Videos/a4gptz2rl45.mp4')
+current_frame = 1
+total_frame = video.get(cv2.CAP_PROP_FRAME_COUNT)
+
 
 def handle(request):
+    global video
+    global current_frame
     # 获取robot摄像头图像
-    img = cv2.imread('C:/Users/YTMartian/Desktop/111.jpg')
+    _, img = video.read()
+    current_frame += 1
+    if current_frame == total_frame:
+        current_frame = 1
+        video.set(cv2.CAP_PROP_POS_FRAMES, 1)
 
     # cv2 image转base64
     _, buffer = cv2.imencode('.png', img)

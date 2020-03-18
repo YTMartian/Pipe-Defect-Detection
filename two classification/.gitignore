@@ -2,3 +2,4 @@
 data
 results
 *.mp4
+__pycache__

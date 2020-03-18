@@ -32,7 +32,7 @@
         {#mapStyle: 'amap://styles/macaron',//地图样式#}
     });
     //one meter is approximately 0.0000009 degree.
-    var meter = 0.0000009;
+    var meter = 9e-6;
     var lines = [];
     var polyLine = new AMap.Polyline({
         //折线的节点坐标数组
@@ -65,8 +65,8 @@
             }
         });
         //左侧地图中显示轨迹
-        longitude += (Math.random() - 0.5) / 1000;
-        latitude += (Math.random() - 0.5) / 1000;
+        longitude += (Math.random() - 0.5) / 100;
+        latitude += (Math.random() - 0.5) / 100;
         lines.push([longitude, latitude]);
         //设置路径，动态绘制
         polyLine.setPath(lines);
@@ -84,7 +84,7 @@
     }
 
     function handleFrames() {
-        window.setInterval("handle()", 500)//每隔一段时间执行一次函数
+        window.setInterval("handle()", 50)//每隔一段时间执行一次函数
     }
 
     window.onload = handleFrames
