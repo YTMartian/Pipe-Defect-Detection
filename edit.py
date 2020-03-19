@@ -1295,6 +1295,8 @@ class Edit(QMainWindow):
         if self.result == 0:  # abnormal.
             # self.timer.stop()
             img, count = self.main_window.yolov3_detect(img)
+            if count > 0:
+                self.manual()
             # self.timer.start()
             # if count > 0:
             #     self.jump_frame = self.timer.fps * 10
@@ -1362,26 +1364,34 @@ class Edit(QMainWindow):
         pass
 
     def manual(self):
+        current_frame_number = self.current_frame_number
+        # to make every 100 frames only have one defect.
+        judge = [abs(int(i['time_in_video']) - current_frame_number) for i in self.all_defects]
+        if len(judge) != 0 and self.is_auto_detect:
+            judge = sorted(judge)
+            if judge[0] < 100:
+                return
         if self.is_playing:
             self.play_video()
-        current_frame_number = self.current_frame_number
         self.edit_defect_button_clicked()
-        self.current_frame_number = current_frame_number
-        self.show_one_frame()
+        if not self.is_auto_detect:
+            self.current_frame_number = current_frame_number
+            self.show_one_frame()
         data = {}
         data['video_id'] = self.video_id
-        data['time_in_video'] = self.current_frame_number
+        data['time_in_video'] = current_frame_number
         current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         data['defect_date'] = current_time
         new_defect = self.main_window.db.add_defect(data)
         if new_defect is None:
             QtWidgets.QMessageBox.information(self, '提示', '标记失败')
             return
-        else:
+        elif not self.is_auto_detect:
             QtWidgets.QMessageBox.information(self, '提示', '标记成功')
         self.all_defects.append(new_defect)
         self.sort_defects_by_time()
-        self.show_one_frame()
+        if not self.is_auto_detect:
+            self.show_one_frame()
         self.defect_id = new_defect['defect_id']
         self.set_defect_info()
         self.draw_defect_marks_in_slider()
