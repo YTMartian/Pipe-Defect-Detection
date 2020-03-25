@@ -977,3 +977,24 @@ class Database:
         except:
             print('get videos failed.')
             return False
+
+    def get_all_staffs(self):
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM staff")
+        self.conn.commit()
+        data = cursor.fetchall()
+        for i in range(len(data)):
+            if data[i][2] == 0:
+                data[i][2] = '项目负责人'
+        return data
+
+    def delete_staff(self, staff_id):
+        try:
+            cursor = self.conn.cursor()
+            print("DELETE FROM staff WHERE staff_id={}".format(staff_id))
+            cursor.execute("DELETE FROM staff WHERE staff_id={}".format(staff_id))
+            self.conn.commit()
+            return True
+        except:
+            print('delete staff failed.')
+            return False

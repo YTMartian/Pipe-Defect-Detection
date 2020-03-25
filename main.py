@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QDate, QUrl
+from PyQt5.QtCore import QDate, QUrl, QPoint
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
     QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu, \
@@ -16,6 +16,7 @@ from resources import *
 from database import *
 from tkinter import *
 from models import *
+from staff import *
 from edit import *
 from word import *
 from PIL import Image
@@ -50,6 +51,9 @@ class MainWindow(QMainWindow):
         # DEBUG.
         # edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
         # edit.show()
+
+        staff = Staff(db=self.db, main_window=self)
+        staff.show()
 
         # load two models.
         # 0 is abnormal and 1 is normal.
@@ -209,10 +213,10 @@ class MainWindow(QMainWindow):
                 background-color:transparent;
                 border-radius:5px;
                 color:white;
-                background-image:url(:/skin);
+                background-image:url(:/settings);
             }
             QPushButton:hover{
-                background-image:url(:/skin_hover);
+                background-image:url(:/settings_hover);
                 background-repeat:no-repeat center
             }
         ''')
@@ -691,12 +695,36 @@ class MainWindow(QMainWindow):
         self.setGeometry(x, y, w, h)
 
     def change_settings(self):
-        flag = self.settings.change_background()
-        if not flag:
-            return
-        background = QtGui.QPalette()
-        background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(self.settings.background_image)))
-        self.main_widget.setPalette(background)
+        context_menu = QMenu(self)
+        context_menu.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        context_menu.setStyleSheet('''
+            QMenu{
+                background:rgba(20,20,20,0.8);
+                font-weight:bold;
+                font-size:17px;
+                color:#d6d6d6;
+                padding-top:10px;
+                border-radius:30px;
+                font-family:"Microsoft YaHei";
+            }
+            QMenu::item::selected{
+                color:#f1f1f1;
+            }
+        ''')
+        skin_management = context_menu.addAction("更换皮肤")
+        staff_management = context_menu.addAction("人员管理")
+        action = context_menu.exec_(
+            self.mapToGlobal(QPoint(self.top_settings.pos().x() + 10, self.top_settings.pos().y() + 10)))
+        if action == skin_management:
+            flag = self.settings.change_background()
+            if not flag:
+                return
+            background = QtGui.QPalette()
+            background.setBrush(self.main_widget.backgroundRole(), QBrush(QPixmap(self.settings.background_image)))
+            self.main_widget.setPalette(background)
+        elif action == staff_management:
+            staff = Staff(db=self.db, main_window=self)
+            staff.show()
 
     def set_managements_style(self):
         for i in range(4):

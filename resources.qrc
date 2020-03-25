@@ -40,6 +40,8 @@
 <file alias="launch">resources/launch.png</file>
 <file alias="camera">resources/camera.png</file>
 <file alias="robot">resources/robot.png</file>
+<file alias="staff">resources/staff.png</file>
+<file alias="add">resources/add.png</file>
 
 </qresource>
 </RCC>
