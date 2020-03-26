@@ -62,7 +62,7 @@ class Edit(QMainWindow):
         self.right_layout = QtWidgets.QGridLayout()
         self.right_layout.setSpacing(0)
         self.right_widget.setLayout(self.right_layout)
-        self.right_widget.setFixedWidth(400)
+        self.right_widget.setFixedWidth(430)
         self.main_layout.addWidget(self.left_widget, 0, 0, 1, 2)
         self.main_layout.addWidget(self.right_widget, 0, 2, 1, 1)
         self.right_top_layout = QHBoxLayout()
@@ -201,7 +201,7 @@ class Edit(QMainWindow):
                 color:#232323;
                 font-size:18px;
                 font-weight:bold;
-                font-family:"DengXian";
+                font-family:"Microsoft YaHei";
             }
         ''')
         self.edit_defect_scroll_area_widget.setStyleSheet('''
@@ -209,7 +209,7 @@ class Edit(QMainWindow):
                 color:#232323;
                 font-size:18px;
                 font-weight:bold;
-                font-family:"DengXian";
+                font-family:"Microsoft YaHei";
             }
         ''')
         self.project_detailed_scroll_area_widget.setStyleSheet('''
@@ -217,7 +217,7 @@ class Edit(QMainWindow):
                 color:#232323;
                 font-size:18px;
                 font-weight:bold;
-                font-family:"DengXian";
+                font-family:"Microsoft YaHei";
             }
         ''')
         self.setCentralWidget(self.main_widget)
@@ -549,7 +549,7 @@ class Edit(QMainWindow):
                 color:#f1f1f1;
                 font-size:18px;
                 border-radius:5px;
-                font-family:"DengXian";
+                font-family:"Microsoft YaHei";
                 padding:10px 10px 10px 10px;
             }
             QPushButton:hover{
@@ -567,7 +567,7 @@ class Edit(QMainWindow):
                 color:#f1f1f1;
                 font-size:18px;
                 border-radius:5px;
-                font-family:"DengXian";
+                font-family:"Microsoft YaHei";
                 padding:10px 10px 10px 10px;
             }
             QPushButton:hover{
@@ -640,7 +640,7 @@ class Edit(QMainWindow):
                 font-weight:bold;
                 color:#f1f1f1;
                 font-size:18px;
-                font-family:"DengXian";
+                font-family:"Microsoft YaHei";
             }
         ''')
         self.draw_field = QLabel()

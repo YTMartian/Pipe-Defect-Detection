@@ -52,8 +52,8 @@ class MainWindow(QMainWindow):
         # edit = Edit(self.db, self.is_edit_video, video_id=53, main_window=self)
         # edit.show()
 
-        staff = Staff(db=self.db, main_window=self)
-        staff.show()
+        # staff = Staff(db=self.db, main_window=self)
+        # staff.show()
 
         # load two models.
         # 0 is abnormal and 1 is normal.

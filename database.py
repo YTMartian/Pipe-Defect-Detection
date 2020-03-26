@@ -983,18 +983,49 @@ class Database:
         cursor.execute("SELECT * FROM staff")
         self.conn.commit()
         data = cursor.fetchall()
-        for i in range(len(data)):
-            if data[i][2] == 0:
-                data[i][2] = '项目负责人'
         return data
 
     def delete_staff(self, staff_id):
         try:
             cursor = self.conn.cursor()
-            print("DELETE FROM staff WHERE staff_id={}".format(staff_id))
             cursor.execute("DELETE FROM staff WHERE staff_id={}".format(staff_id))
             self.conn.commit()
             return True
         except:
             print('delete staff failed.')
+            return False
+
+    def add_staff(self, name, job, id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "INSERT INTO staff(staff_name,staff_category,staff_number) VALUES('{}',{},'{}')".format(name, job, id))
+            self.conn.commit()
+            return True
+        except:
+            print('add staff failed.')
+            return False
+
+    def get_one_staff(self, staff_id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM staff WHERE staff_id={}".format(staff_id))
+            self.conn.commit()
+            data = cursor.fetchall()
+            return data
+        except:
+            print('get one staff failed.')
+            return None
+
+    def update_staff(self, staff_id, name, job, id):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                "UPDATE staff SET staff_name='{}',staff_category={},staff_number='{}' WHERE staff_id={}".format(name,
+                                                                                                                job, id,
+                                                                                                                staff_id))
+            self.conn.commit()
+            return True
+        except:
+            print('update staff failed.')
             return False
