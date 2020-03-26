@@ -42,6 +42,9 @@
 <file alias="robot">resources/robot.png</file>
 <file alias="staff">resources/staff.png</file>
 <file alias="add">resources/add.png</file>
+<file alias="previous_page">resources/previous_page.png</file>
+<file alias="next_page">resources/next_page.png</file>
+<file alias="go">resources/go.png</file>
 
 </qresource>
 </RCC>

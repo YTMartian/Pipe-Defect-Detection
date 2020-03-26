@@ -107,6 +107,7 @@ class MainWindow(QMainWindow):
         self.margin_right_bottom = 7
         self.installEventFilter(self)
         self.is_searching = False
+        self.sort_order = QtCore.Qt.DescendingOrder
 
         self.main_widget = QtWidgets.QWidget()  # main window.
         background = QtGui.QPalette()
@@ -379,7 +380,88 @@ class MainWindow(QMainWindow):
                 background-repeat:no-repeat center
             }
         ''')
+        self.number_of_per_page = 12
+        self.current_page = 1
         self.cancel_button.clicked.connect(self.cancel_add_project)
+        self.start_time = QDateEdit()
+        self.start_time.setCalendarPopup(True)
+        self.start_time.setDate(QDate(2020, 1, 1))
+        self.end_time = QDateEdit()
+        self.end_time.setCalendarPopup(True)
+        self.end_time.setDate(QDate.currentDate())
+        self.previous_page = QPushButton()
+        self.previous_page.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.previous_page.setIcon(QIcon(":/previous"))
+        self.previous_page.clicked.connect(self.previous_table_page)
+        self.previous_page.setStyleSheet('''
+            QPushButton{
+                    font-weight:bold;
+                    color:#f1f1f1;
+                    font-size:20px;
+                    border-radius:5px;
+                    font-family:"DengXian";
+                    padding:5px 5px 5px 5px;
+                }
+                QPushButton:hover{
+                    background-color:rgba(200,200,200,0.2);
+                }
+        ''')
+        self.next_page = QPushButton()
+        self.next_page.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.next_page.setIcon(QIcon(":/next"))
+        self.previous_page.clicked.connect(self.next_table_page)
+        self.next_page.setStyleSheet('''
+            QPushButton{
+                    font-weight:bold;
+                    color:#f1f1f1;
+                    font-size:20px;
+                    border-radius:5px;
+                    font-family:"DengXian";
+                    padding:5px 5px 5px 5px;
+                }
+                QPushButton:hover{
+                    background-color:rgba(200,200,200,0.2);
+                }
+        ''')
+        self.page_number = QLineEdit()
+        self.page_number.setFixedWidth(40)
+        self.page_number.setAlignment(QtCore.Qt.AlignCenter)
+        self.page_number.setStyleSheet('''
+            QLineEdit{
+                background:transparent;
+                border:none;
+                font-weight:bold;
+                font-size:20px;
+                color:#eeeeee;
+                text-align:center;
+                border-bottom:3px dotted #0eee8f;
+            }
+        ''')
+        self.page_number.setText('1')
+        self.goto_page = QPushButton()
+        self.goto_page.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
+        self.goto_page.setIcon(QIcon(":/go"))
+        self.goto_page.setFixedSize(30, 30)
+        self.previous_page.clicked.connect(self.goto_table_page)
+        self.goto_page.setStyleSheet('''
+            QPushButton{
+                font-weight:bold;
+                color:#f1f1f1;
+                font-size:20px;
+                border-radius:5px;
+                font-family:"DengXian";
+                padding:5px 5px 5px 5px;
+            }
+            QPushButton:hover{
+                background-color:rgba(200,200,200,0.2);
+            }
+        ''')
+        self.toggle_project_field.addWidget(self.start_time)
+        self.toggle_project_field.addWidget(self.end_time)
+        self.toggle_project_field.addWidget(self.previous_page)
+        self.toggle_project_field.addWidget(self.page_number)
+        self.toggle_project_field.addWidget(self.next_page)
+        self.toggle_project_field.addWidget(self.goto_page)
         self.toggle_project_field.addWidget(self.ensure_button)
         self.toggle_project_field.addWidget(self.cancel_button)
         self.toggle_project_field.addWidget(self.toggle_project_detailed_view)
@@ -398,7 +480,7 @@ class MainWindow(QMainWindow):
         self.show_table.setShowGrid(True)
         self.manage_layout.addWidget(self.show_table, 4, 2, 10, 10)
         self.show_table.setCornerButtonEnabled(False)  # set the top-left corner.
-        self.show_table.horizontalHeader().setSectionsClickable(False)
+        # self.show_table.horizontalHeader().setSectionsClickable(False)
         self.show_table.verticalHeader().setSectionsClickable(False)
         self.show_table.setStyleSheet('''
             QWidget{
@@ -417,6 +499,13 @@ class MainWindow(QMainWindow):
         ''')
         # change header style:should add ::section.
         self.show_table.horizontalHeader().setStyleSheet('''
+        QTableView QHeaderView{	
+                background-color:#363A5F;
+                font-size:20px;
+                height:30px;
+                font-weight:bold;
+                color:#FFFFFF;
+            }
             QTableView QHeaderView::section{	
                 background-color:#363A5F;
                 font-size:20px;
@@ -456,6 +545,8 @@ class MainWindow(QMainWindow):
         self.manage_layout.addWidget(self.browser, 3, 2, 10, 10)
 
         self.hide_all()
+        # to get the clicked column number.
+        self.show_table.horizontalHeader().sectionClicked[int].connect(self.sort_table)
 
     def __del__(self):
         self.top_close_clicked()
@@ -841,6 +932,25 @@ class MainWindow(QMainWindow):
         else:  # search in all.
             pass
 
+    def sort_table(self, column):
+        print(time.time())
+        print(column)
+        if self.sort_order == QtCore.Qt.AscendingOrder:
+            self.sort_order = QtCore.Qt.DescendingOrder
+        else:
+            self.sort_order = QtCore.Qt.AscendingOrder
+        if self.management_flag == self.project_management_flag:
+            if self.toggle_project_detailed_view.isChecked():
+                if column <= 5:
+                    # it sort as string not integer
+                    self.show_table.sortItems(column, self.sort_order)
+            else:
+                self.show_table.sortItems(column, self.sort_order)
+        elif self.management_flag == self.video_management_flag:
+            self.show_table.sortItems(column, self.sort_order)
+        elif self.management_flag == self.defect_management_flag:
+            self.show_table.sortItems(column, self.sort_order)
+
     def toggle_project_view(self):
         self.ensure_button.setVisible(False)
         self.cancel_button.setVisible(False)
@@ -877,18 +987,30 @@ class MainWindow(QMainWindow):
             self.show_table.horizontalHeader().resizeSection(i, QHeaderView.ResizeToContents)
 
     def insert_data_to_table(self):
-        self.show_table.setRowCount(len(self.data))
-        for row in range(len(self.data)):
+        self.show_table.setRowCount(self.number_of_per_page)
+        count = 0
+        for row in range(self.number_of_per_page * (self.current_page - 1), len(self.data)):
+            if count == self.number_of_per_page:
+                break
             # the first item is id, we will use it to determine which row we choose to find it in database.
             for column in range(1, len(self.data[row])):
+
                 try:
-                    cell = QTableWidgetItem(self.data[row][column])
+                    cell = MyTableWidgetItem()
+                    try:
+                        # to sort the integer.
+                        # if this data is integer...
+                        d = int(self.data[row][column])
+                        cell.setData(QtCore.Qt.EditRole, d)
+                    except:
+                        cell.setData(QtCore.Qt.EditRole, self.data[row][column])
                     # so, in this way, when hover the mouse it will show the whole text.
                     # fantastic.
                     cell.setToolTip(str(self.data[row][column]))
                     self.show_table.setItem(row, column - 1, cell)
                 except:
                     pass
+            count += 1
 
     # right click menu.
     def contextMenuEvent(self, event):
@@ -1209,6 +1331,15 @@ class MainWindow(QMainWindow):
         flag = self.word.generate(project_id)
         QtWidgets.QMessageBox.information(self, '提示', '生成成功' if flag else '生成失败')
 
+    def previous_table_page(self):
+        pass
+
+    def next_table_page(self):
+        pass
+
+    def goto_table_page(self):
+        pass
+
 
 def run_django():
     os.system('python ./server/manage.py runserver')
@@ -1224,6 +1355,23 @@ class DjangoThread(threading.Thread):
             run_django()
         self.running = False
         time.sleep(1)
+
+
+# the default tableWidgetItem use the sort :1<10<11<12<2<20<21...
+# https://stackoverflow.com/questions/11938459/sorting-in-pyqt-tablewidget
+class MyTableWidgetItem(QTableWidgetItem):
+    # custom sorting.
+    def __lt__(self, other):
+        if isinstance(other, QTableWidgetItem):
+            x = self.data(QtCore.Qt.EditRole)
+            y = other.data(QtCore.Qt.EditRole)
+
+            if isinstance(x, int) and isinstance(y, int):
+                return x < y
+            else:
+                return str(x) < str(y)
+
+        return super(MyTableWidgetItem, self).__lt__(other)
 
 
 def main():
