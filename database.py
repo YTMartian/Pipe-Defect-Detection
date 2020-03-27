@@ -45,13 +45,23 @@ class Database:
         data = cursor.fetchall()
         return data[0][0]
 
-    def get_project_detailed(self, search_text=None):
+    def get_project_detailed(self, search_text=None, time_flag=False, start_time='', end_time=''):
         cursor = self.conn.cursor()
-        if search_text is None:
-            cursor.execute("SELECT * FROM project")
+        if time_flag:
+            if search_text is None:
+                cursor.execute(
+                    "SELECT * FROM project WHERE start_date>'{}' AND start_date<'{}'".format(start_time, end_time))
+            else:
+                cursor.execute(
+                    "SELECT * FROM project WHERE project_no LIKE '%{0}%' AND start_date>'{1}' AND start_date<'{2}' OR project_name LIKE '%{0}%' AND start_date>'{1}' AND start_date<'{2}'".format(
+                        search_text, start_time, end_time))
         else:
-            cursor.execute(
-                "SELECT * FROM project WHERE project_no LIKE '%{0}%' OR project_name LIKE '%{0}%'".format(search_text))
+            if search_text is None:
+                cursor.execute("SELECT * FROM project")
+            else:
+                cursor.execute(
+                    "SELECT * FROM project WHERE project_no LIKE '%{0}%' OR project_name LIKE '%{0}%'".format(
+                        search_text))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
@@ -82,13 +92,23 @@ class Database:
         res = [str(data[0][i]) for i in range(0, 18)]
         return res
 
-    def get_project_statistic(self, search_text=None):
+    def get_project_statistic(self, search_text=None,time_flag=False, start_time='', end_time=''):
         cursor = self.conn.cursor()
-        if search_text is None:
-            cursor.execute("SELECT * FROM project")
+        if time_flag:
+            if search_text is None:
+                cursor.execute(
+                    "SELECT * FROM project WHERE start_date>'{}' AND start_date<'{}'".format(start_time, end_time))
+            else:
+                cursor.execute(
+                    "SELECT * FROM project WHERE project_no LIKE '%{0}%' AND start_date>'{1}' AND start_date<'{2}' OR project_name LIKE '%{0}%' AND start_date>'{1}' AND start_date<'{2}'".format(
+                        search_text, start_time, end_time))
         else:
-            cursor.execute(
-                "SELECT * FROM project WHERE project_no LIKE '%{0}%' OR project_name LIKE '%{0}%'".format(search_text))
+            if search_text is None:
+                cursor.execute("SELECT * FROM project")
+            else:
+                cursor.execute(
+                    "SELECT * FROM project WHERE project_no LIKE '%{0}%' OR project_name LIKE '%{0}%'".format(
+                        search_text))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
@@ -139,42 +159,52 @@ class Database:
                 pipe = {'number': pipe_amount, 'name': pipe_type, 'diameter': pipe_diameter,
                         'pipe_length': pipe_length, 'detection_length': detection_length}
                 pipes.append(pipe.copy())
-            temp.append(str(pipe_amount))
+            temp.append(pipe_amount)
             # get pipe total length.
             pipe_total_length = self.get_value(
                 "SELECT SUM(pipe_length) FROM  video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
                     project_id))
             if pipe_total_length is None:
                 pipe_total_length = 0
-            temp.append(str('%.3f' % pipe_total_length))
+            temp.append(float('%.3f' % pipe_total_length))
             # get standard sum.
             standard_sum = self.get_value(
                 "SELECT COUNT(*) FROM  defect WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {}) ".format(
                     project_id))
-            temp.append(str(standard_sum))
+            temp.append(standard_sum)
             # get defect sum.
             defect_sum = standard_sum  # maybe they are the same things?
-            temp.append(str(defect_sum))
+            temp.append(defect_sum)
             # get pipe detection total length.
             pipe_total_detection_length = self.get_value(
                 "SELECT SUM(detection_length) FROM  video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
                     project_id))
             if pipe_total_detection_length is None:
                 pipe_total_detection_length = 0
-            temp.append(str('%.3f' % pipe_total_detection_length))
+            temp.append(float('%.3f' % pipe_total_detection_length))
             temp.append(pipes.copy())
             res.append(temp.copy())
         return res
 
-    def get_video(self, project_id):
+    def get_video(self, project_id, time_flag=False, start_time='', end_time=''):
         cursor = self.conn.cursor()
-        if project_id is None:
-            cursor.execute(
-                "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video")
+        if time_flag:
+            if project_id is None:
+                cursor.execute(
+                    "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video WHERE import_date>'{}' AND import_date<'{}'".format(
+                        start_time, end_time))
+            else:
+                cursor.execute(
+                    "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {}) AND import_date>'{}' AND import_date<'{}'".format(
+                        project_id, start_time, end_time))
         else:
-            cursor.execute(
-                "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
-                    project_id))
+            if project_id is None:
+                cursor.execute(
+                    "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video")
+            else:
+                cursor.execute(
+                    "SELECT video_id,road_name,start_manhole_id,end_manhole_id,pipe_type_id,pipe_material_id,video_name,record_date,import_date FROM video WHERE video_id IN (SELECT video_id FROM project_video WHERE project_id = {})".format(
+                        project_id))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
@@ -196,17 +226,26 @@ class Database:
             temp[3] = self.get_name('pipe_type', temp[3])
             temp[4] = self.get_name('pipe_material', temp[4])
             defect_amount = self.get_value("SELECT COUNT(*) FROM defect WHERE video_id = {}".format(temp[0]))
-            temp.append(str(defect_amount))
+            temp.append(defect_amount)
 
             res.append(temp.copy())
         return res
 
-    def get_defect(self, video_id):
+    def get_defect(self, video_id, time_flag=False, start_time='', end_time=''):
         cursor = self.conn.cursor()
-        if video_id is None:
-            cursor.execute("SELECT * FROM defect")
+        if time_flag:
+            if video_id is None:
+                cursor.execute(
+                    "SELECT * FROM defect WHERE defect_date>'{}' AND defect_date<'{}'".format(start_time, end_time))
+            else:
+                cursor.execute(
+                    "SELECT * FROM defect WHERE video_id = {} AND defect_date>'{}' AND defect_date<'{}'".format(
+                        video_id, start_time, end_time))
         else:
-            cursor.execute("SELECT * FROM defect WHERE video_id = {}".format(video_id))
+            if video_id is None:
+                cursor.execute("SELECT * FROM defect")
+            else:
+                cursor.execute("SELECT * FROM defect WHERE video_id = {}".format(video_id))
         self.conn.commit()
         data = cursor.fetchall()
         cursor.close()
@@ -232,11 +271,11 @@ class Database:
             temp.append(str(i[3]))  # defect_type_id.
             temp.append(str(i[8]))  # defect_grade_id.
             temp.append(str(i[11]))  # defect_attribute.
-            temp.append(str(i[2]))  # time_in_video.
+            temp.append(i[2])  # time_in_video.
             temp.append(str(video_data[0][6]))  # record_date.
             temp.append(str(i[10]))  # interpretation_date.
-            temp.append(str(i[4]))  # defect_distance
-            temp.append(str(i[5]))  # defect_length
+            temp.append(i[4])  # defect_distance
+            temp.append(i[5])  # defect_length
 
             temp[3] = self.get_name('pipe_type', temp[3])
             temp[4] = self.get_name('pipe_material', temp[4])

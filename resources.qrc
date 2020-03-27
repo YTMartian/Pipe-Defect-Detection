@@ -45,6 +45,7 @@
 <file alias="previous_page">resources/previous_page.png</file>
 <file alias="next_page">resources/next_page.png</file>
 <file alias="go">resources/go.png</file>
+<file alias="drop_down">resources/drop_down.png</file>
 
 </qresource>
 </RCC>

@@ -639,7 +639,7 @@ class Edit(QMainWindow):
             QLabel{
                 font-weight:bold;
                 color:#f1f1f1;
-                font-size:18px;
+                font-size:15px;
                 font-family:"Microsoft YaHei";
             }
         ''')

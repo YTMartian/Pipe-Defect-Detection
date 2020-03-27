@@ -1,9 +1,11 @@
+import operator
+
 from PyQt5.QtCore import QDate, QUrl, QPoint
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QMainWindow, QGraphicsDropShadowEffect, QLabel, QPushButton, QApplication, QLineEdit, \
     QListView, QHBoxLayout, QRadioButton, QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu, \
     QComboBox, QCalendarWidget, QDateEdit, QMessageBox
-from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush
+from PyQt5.QtGui import QIcon, QColor, QCursor, QPixmap, QBrush, QIntValidator
 from tkinter import filedialog
 from PyQt5 import QtWidgets
 from torch.autograd import Variable
@@ -28,6 +30,10 @@ import torch
 import time
 import sys
 import os
+
+'''
+MORE QSS STYLE SEE:https://github.com/ColinDuquesnoy/QDarkStyleSheet/blob/master/qdarkstyle/style.qss
+'''
 
 
 class MainWindow(QMainWindow):
@@ -386,9 +392,76 @@ class MainWindow(QMainWindow):
         self.start_time = QDateEdit()
         self.start_time.setCalendarPopup(True)
         self.start_time.setDate(QDate(2020, 1, 1))
+        self.start_time.setStyleSheet('''
+            QDateEdit {
+                border: 2px solid lightgray;
+                border-radius: 5px;
+                color:#232323;
+                font-color:#232323;
+            }
+            
+            QTableView{
+                background:#ffffff;
+                color:#232323;
+            }
+            
+            QDateTimeEdit{
+                background:#ffffff;
+                color:#232323;
+            }
+           
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px;
+                border-left-width: 1px;
+                border-left-color: darkgray;
+                border-left-style: solid;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+             
+            QDateEdit::down-arrow {
+                image: url(:/drop_down);
+            }
+        ''')
+        self.start_time.dateChanged.connect(self.date_changed)
         self.end_time = QDateEdit()
         self.end_time.setCalendarPopup(True)
         self.end_time.setDate(QDate.currentDate())
+        self.end_time.setStyleSheet('''
+            QDateEdit {
+                border: 2px solid lightgray;
+                border-radius: 5px;
+                color:#232323;
+            }
+            
+            QTableView{
+                background:#ffffff;
+                color:#232323;
+            }
+            
+            QDateTimeEdit{
+                background:#ffffff;
+                color:#232323;
+            }
+             
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px;
+                border-left-width: 1px;
+                border-left-color: darkgray;
+                border-left-style: solid;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+             
+            QDateEdit::down-arrow {
+                image: url(:/drop_down);
+            }
+        ''')
+        self.end_time.dateChanged.connect(self.date_changed)
         self.previous_page = QPushButton()
         self.previous_page.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.previous_page.setIcon(QIcon(":/previous"))
@@ -409,7 +482,7 @@ class MainWindow(QMainWindow):
         self.next_page = QPushButton()
         self.next_page.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.next_page.setIcon(QIcon(":/next"))
-        self.previous_page.clicked.connect(self.next_table_page)
+        self.next_page.clicked.connect(self.next_table_page)
         self.next_page.setStyleSheet('''
             QPushButton{
                     font-weight:bold;
@@ -425,7 +498,7 @@ class MainWindow(QMainWindow):
         ''')
         self.page_number = QLineEdit()
         self.page_number.setFixedWidth(40)
-        self.page_number.setAlignment(QtCore.Qt.AlignCenter)
+        self.page_number.setAlignment(QtCore.Qt.AlignRight)
         self.page_number.setStyleSheet('''
             QLineEdit{
                 background:transparent;
@@ -438,11 +511,27 @@ class MainWindow(QMainWindow):
             }
         ''')
         self.page_number.setText('1')
+        self.page_number.setValidator(QIntValidator())  # only accept digits.
+        self.total_page_number = QLineEdit()
+        self.total_page_number.setFixedWidth(40)
+        self.total_page_number.setAlignment(QtCore.Qt.AlignLeft)
+        self.total_page_number.setEnabled(False)
+        self.total_page_number.setStyleSheet('''
+            QLineEdit{
+                background:transparent;
+                border:none;
+                font-weight:bold;
+                font-size:20px;
+                color:#eeeeee;
+                text-align:center;
+                border-bottom:3px dotted #dd6572;
+            }
+        ''')
         self.goto_page = QPushButton()
         self.goto_page.setCursor(QCursor(QtCore.Qt.PointingHandCursor))
         self.goto_page.setIcon(QIcon(":/go"))
         self.goto_page.setFixedSize(30, 30)
-        self.previous_page.clicked.connect(self.goto_table_page)
+        self.goto_page.clicked.connect(self.goto_table_page)
         self.goto_page.setStyleSheet('''
             QPushButton{
                 font-weight:bold;
@@ -460,6 +549,7 @@ class MainWindow(QMainWindow):
         self.toggle_project_field.addWidget(self.end_time)
         self.toggle_project_field.addWidget(self.previous_page)
         self.toggle_project_field.addWidget(self.page_number)
+        self.toggle_project_field.addWidget(self.total_page_number)
         self.toggle_project_field.addWidget(self.next_page)
         self.toggle_project_field.addWidget(self.goto_page)
         self.toggle_project_field.addWidget(self.ensure_button)
@@ -836,6 +926,8 @@ class MainWindow(QMainWindow):
     def all_managements(self):
         sender = self.sender()
         self.set_managements_style()
+        self.current_page = 1
+        self.page_number.setText(str(self.current_page))
         sender.setStyleSheet('''
             QPushButton{
                 background-color:rgba(200,200,200,0.3);
@@ -869,33 +961,54 @@ class MainWindow(QMainWindow):
         self.toggle_project_detailed_view.setVisible(True)
         self.show_table.setVisible(True)
         self.toggle_project_view()
+        self.start_time.setVisible(True)
+        self.end_time.setVisible(True)
+        self.page_number.setVisible(True)
+        self.total_page_number.setVisible(True)
+        self.previous_page.setVisible(True)
+        self.next_page.setVisible(True)
+        self.goto_page.setVisible(True)
 
     def video_management(self, project_id):
         self.hide_all()
+        self.start_time.setVisible(True)
+        self.end_time.setVisible(True)
+        self.page_number.setVisible(True)
+        self.total_page_number.setVisible(True)
+        self.previous_page.setVisible(True)
+        self.next_page.setVisible(True)
+        self.goto_page.setVisible(True)
         # self.search_button.setVisible(True)
         # self.search_input.setVisible(True)
         self.search_input.setPlaceholderText('搜索视频...')
         self.show_table.setVisible(True)
         self.show_table.setColumnCount(8)
-        self.show_table.setRowCount(0)
         self.show_table.setHorizontalHeaderLabels(
             ('道路名称', '管道编号', '管道类型', '管道材质', '视频文件', '视频日期', '导入日期', '判读数量'))
         self.resize_table_size_to_contents()
-        self.data = self.db.get_video(project_id)
+        self.data = self.db.get_video(project_id, time_flag=True, start_time=self.start_time.text(),
+                                      end_time=self.end_time.text())
         self.insert_data_to_table()
 
     def defect_management(self, video_id):
         self.hide_all()
+        self.start_time.setVisible(True)
+        self.end_time.setVisible(True)
+        self.page_number.setVisible(True)
+        self.total_page_number.setVisible(True)
+        self.previous_page.setVisible(True)
+        self.next_page.setVisible(True)
+        self.goto_page.setVisible(True)
         # self.search_button.setVisible(True)
         # self.search_input.setVisible(True)
         self.search_input.setPlaceholderText('搜索缺陷...')
         self.show_table.setVisible(True)
         self.show_table.setColumnCount(11)
-        self.show_table.setRowCount(0)
         self.show_table.setHorizontalHeaderLabels(
             ('道路名称', '管道编号', '管道类型', '管道材质', '管径(mm)', '缺陷名称', '等级', '缺陷性质', '缺陷位置/帧', '检测日期', '判读日期'))
         self.resize_table_size_to_contents()
-        self.data = self.db.get_defect(video_id)
+        self.data = self.db.get_defect(video_id, time_flag=True, start_time=self.start_time.text(),
+                                       end_time=self.end_time.text())
         self.insert_data_to_table()
 
     def robot_management(self):
@@ -916,6 +1029,13 @@ class MainWindow(QMainWindow):
         self.search_button.setVisible(False)
         self.browser.setVisible(False)
         self.browser.load(QUrl(''))
+        self.start_time.setVisible(False)
+        self.end_time.setVisible(False)
+        self.page_number.setVisible(False)
+        self.total_page_number.setVisible(False)
+        self.previous_page.setVisible(False)
+        self.next_page.setVisible(False)
+        self.goto_page.setVisible(False)
 
     def search(self):
         search_text = self.search_input.text()
@@ -933,23 +1053,23 @@ class MainWindow(QMainWindow):
             pass
 
     def sort_table(self, column):
-        print(time.time())
-        print(column)
         if self.sort_order == QtCore.Qt.AscendingOrder:
             self.sort_order = QtCore.Qt.DescendingOrder
         else:
             self.sort_order = QtCore.Qt.AscendingOrder
-        if self.management_flag == self.project_management_flag:
-            if self.toggle_project_detailed_view.isChecked():
-                if column <= 5:
-                    # it sort as string not integer
-                    self.show_table.sortItems(column, self.sort_order)
-            else:
-                self.show_table.sortItems(column, self.sort_order)
-        elif self.management_flag == self.video_management_flag:
-            self.show_table.sortItems(column, self.sort_order)
-        elif self.management_flag == self.defect_management_flag:
-            self.show_table.sortItems(column, self.sort_order)
+        self.data.sort(key=operator.itemgetter(column + 1), reverse=self.sort_order == QtCore.Qt.AscendingOrder)
+        self.insert_data_to_table()
+        # if self.management_flag == self.project_management_flag:
+        #     if self.toggle_project_detailed_view.isChecked():
+        #         if column <= 5:
+        #             # it sort as string not integer
+        #             self.show_table.sortItems(column, self.sort_order)
+        #     else:
+        #         self.show_table.sortItems(column, self.sort_order)
+        # elif self.management_flag == self.video_management_flag:
+        #     self.show_table.sortItems(column, self.sort_order)
+        # elif self.management_flag == self.defect_management_flag:
+        #     self.show_table.sortItems(column, self.sort_order)
 
     def toggle_project_view(self):
         self.ensure_button.setVisible(False)
@@ -957,27 +1077,31 @@ class MainWindow(QMainWindow):
         self.is_add_project = False
         if self.toggle_project_detailed_view.isChecked():
             self.show_table.setColumnCount(16)
-            self.show_table.setRowCount(0)
             self.show_table.setHorizontalHeaderLabels((
                 '工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '报告编号', '委托单位', '建设单位', '设计单位',
                 '施工单位', '监理单位', '检测类型', '移动方式', '封堵方式', '排水方式', '清疏方式'))
             self.resize_table_size_to_contents()
             if self.is_searching:
-                self.data = self.db.get_project_detailed(self.search_input.text())
+                self.data = self.db.get_project_detailed(self.search_input.text(), time_flag=True,
+                                                         start_time=self.start_time.text(),
+                                                         end_time=self.end_time.text())
             else:
-                self.data = self.db.get_project_detailed()
+                self.data = self.db.get_project_detailed(time_flag=True, start_time=self.start_time.text(),
+                                                         end_time=self.end_time.text())
             self.is_searching = False
             self.insert_data_to_table()
         else:
             self.show_table.setColumnCount(10)
-            self.show_table.setRowCount(0)
             self.show_table.setHorizontalHeaderLabels(
                 ('工程编号', '工程名称', '工程地址', '负责人员', '开工日期', '视频总数', '管道总数', '里程(KM)', '标内判读', '判读总数'))
             self.resize_table_size_to_contents()
             if self.is_searching:
-                self.data = self.db.get_project_statistic(self.search_input.text())
+                self.data = self.db.get_project_statistic(self.search_input.text(), time_flag=True,
+                                                          start_time=self.start_time.text(),
+                                                          end_time=self.end_time.text())
             else:
-                self.data = self.db.get_project_statistic()
+                self.data = self.db.get_project_statistic(time_flag=True, start_time=self.start_time.text(),
+                                                          end_time=self.end_time.text())
             self.is_searching = False
             self.insert_data_to_table()
 
@@ -987,13 +1111,20 @@ class MainWindow(QMainWindow):
             self.show_table.horizontalHeader().resizeSection(i, QHeaderView.ResizeToContents)
 
     def insert_data_to_table(self):
+        total_page_number = (len(self.data) + self.number_of_per_page - 1) // self.number_of_per_page
+        self.total_page_number.setText('/ ' + str(total_page_number))
+        self.show_table.setRowCount(0)
         self.show_table.setRowCount(self.number_of_per_page)
         count = 0
-        for row in range(self.number_of_per_page * (self.current_page - 1), len(self.data)):
+        start_number = self.number_of_per_page * (self.current_page - 1)
+        for row in range(start_number, len(self.data)):
             if count == self.number_of_per_page:
                 break
             # the first item is id, we will use it to determine which row we choose to find it in database.
-            for column in range(1, len(self.data[row])):
+            data = self.data[row]
+            if self.management_flag == self.defect_management_flag:
+                data = data[:-2]  # because there is more items than the table column.
+            for column in range(1, len(data)):
 
                 try:
                     cell = MyTableWidgetItem()
@@ -1007,7 +1138,7 @@ class MainWindow(QMainWindow):
                     # so, in this way, when hover the mouse it will show the whole text.
                     # fantastic.
                     cell.setToolTip(str(self.data[row][column]))
-                    self.show_table.setItem(row, column - 1, cell)
+                    self.show_table.setItem(row - start_number, column - 1, cell)
                 except:
                     pass
             count += 1
@@ -1141,6 +1272,27 @@ class MainWindow(QMainWindow):
         self.add_project_widgets[2].setPlaceholderText('工程地址...')
         self.show_table.setCellWidget(row, 2, self.add_project_widgets[2])
         self.add_project_widgets.append(QComboBox())  # staff_name.
+        self.add_project_widgets[3].setStyleSheet('''
+            QComboBox {
+                border: 2px solid lightgray;
+                border-radius: 5px;
+            }
+             
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px;
+                border-left-width: 1px;
+                border-left-color: darkgray;
+                border-left-style: solid;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+             
+            QComboBox::down-arrow {
+                image: url(:/drop_down);
+            }
+        ''')
         staff = self.db.get_one_table('staff')
         self.add_project_tables.append(staff)
         for i in staff:
@@ -1150,8 +1302,24 @@ class MainWindow(QMainWindow):
         self.add_project_widgets[4].setDate(QDate.currentDate())
         self.add_project_widgets[4].setCalendarPopup(True)
         self.add_project_widgets[4].setStyleSheet('''
-            QDateEdit{
-                width:20px;
+            QDateEdit {
+                border: 2px solid lightgray;
+                border-radius: 5px;
+            }
+             
+            QDateEdit::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px;
+                border-left-width: 1px;
+                border-left-color: darkgray;
+                border-left-style: solid;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+             
+            QDateEdit::down-arrow {
+                image: url(:/drop_down);
             }
         ''')
         self.show_table.setCellWidget(row, 4, self.add_project_widgets[4])
@@ -1207,10 +1375,26 @@ class MainWindow(QMainWindow):
         # set all of the combo boxes' style.
         for i in range(11, 16):
             self.add_project_widgets[i].setStyleSheet('''
-                QComboBox{
-                    width:50px;
-                }
-            ''')
+            QComboBox {
+                border: 2px solid lightgray;
+                border-radius: 5px;
+            }
+             
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px;
+                border-left-width: 1px;
+                border-left-color: darkgray;
+                border-left-style: solid;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+             
+            QComboBox::down-arrow {
+                image: url(:/drop_down);
+            }
+        ''')
         if self.is_edit_project:
             data = self.db.get_one_project_detailed(self.edit_project_id)
             self.add_project_widgets[0].setText(data[1])
@@ -1332,13 +1516,39 @@ class MainWindow(QMainWindow):
         QtWidgets.QMessageBox.information(self, '提示', '生成成功' if flag else '生成失败')
 
     def previous_table_page(self):
-        pass
+        if self.current_page == 1:
+            return
+        self.current_page -= 1
+        self.page_number.setText(str(self.current_page))
+        self.insert_data_to_table()
 
     def next_table_page(self):
-        pass
+        total_page_number = (len(self.data) + self.number_of_per_page - 1) // self.number_of_per_page
+        if self.current_page == total_page_number:
+            return
+        self.current_page += 1
+        self.page_number.setText(str(self.current_page))
+        self.insert_data_to_table()
 
     def goto_table_page(self):
-        pass
+        total_page_number = (len(self.data) + self.number_of_per_page - 1) // self.number_of_per_page
+        go = int(self.page_number.text())
+        if go > total_page_number:
+            self.current_page = total_page_number
+        elif go < 1:
+            self.current_page = 1
+        else:
+            self.current_page = go
+        self.page_number.setText(str(self.current_page))
+        self.insert_data_to_table()
+
+    def date_changed(self):
+        if self.management_flag == self.project_management_flag:
+            self.project_management()
+        elif self.management_flag == self.video_management_flag:
+            self.video_management(None)
+        elif self.management_flag == self.defect_management_flag:
+            self.defect_management(None)
 
 
 def run_django():
