@@ -32,8 +32,9 @@
         {#mapStyle: 'amap://styles/macaron',//地图样式#}
     });
     //one meter is approximately 0.0000009 degree.
-    var meter = 9e-6;
+    var meter = 9e-7;
     var lines = [];
+    var color = 0;
     var polyLine = new AMap.Polyline({
         //折线的节点坐标数组
         path: [[longitude, latitude]],
@@ -61,20 +62,25 @@
             },
             success: function () {
                 let data = request.responseText;
-                $('#show-image').attr('src', "data:image/png;base64," + data);
+                let img = data.slice(0, data.length - 29);
+                let t = data.slice(data.length - 29, data.length - 1);
+                let latitude_ = t.slice(0, 14);
+                let longitude_ = t.slice(14, t.length);
+                color = data[data.length - 1];
+                color = parseInt(color);
+                latitude_ = parseFloat(latitude_);
+                longitude_ = parseFloat(longitude_);
+                lines.push([longitude_, latitude_]);
+                $('#show-image').attr('src', "data:image/png;base64," + img);
             }
         });
-        //左侧地图中显示轨迹
-        longitude += (Math.random() - 0.5) / 100;
-        latitude += (Math.random() - 0.5) / 100;
-        lines.push([longitude, latitude]);
         //设置路径，动态绘制
         polyLine.setPath(lines);
         //如果是abnormal的，标红
-        if (Math.random() > 0.7) {
+        if (color === 1) {
             new AMap.Polyline({
                 //折线的节点坐标数组
-                path: lines.slice(lines.length-2),
+                path: lines.slice(lines.length - 2),
                 map: map,
                 strokeColor: "#d92414",  //线颜色
                 strokeWeight: 4,      //线宽

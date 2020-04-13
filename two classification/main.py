@@ -12,7 +12,7 @@ import torchvision
 import torch
 import time
 
-batch_size = 64
+batch_size = 1
 lr = 1e-3
 epochs = 100
 momentum = 0.9

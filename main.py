@@ -397,7 +397,6 @@ class MainWindow(QMainWindow):
                 border: 2px solid lightgray;
                 border-radius: 5px;
                 color:#232323;
-                font-color:#232323;
             }
             
             QTableView{
@@ -658,7 +657,7 @@ class MainWindow(QMainWindow):
 
         # Apply NMS
         pred = non_max_suppression(pred, conf_thres=0.3)
-        count = len(pred)
+        count = 0
 
         # Process detections
         for i, det in enumerate(pred):  # detections per image
@@ -677,6 +676,7 @@ class MainWindow(QMainWindow):
                 for *xyxy, conf, cls in det:
                     label = '%s %.2f' % (self.names[int(cls)], conf)
                     plot_one_box(xyxy, img0, label=label, color=self.colors[int(cls)])
+                    count += 1
         return img0, count
 
     @staticmethod
@@ -987,7 +987,7 @@ class MainWindow(QMainWindow):
             ('道路名称', '管道编号', '管道类型', '管道材质', '视频文件', '视频日期', '导入日期', '判读数量'))
         self.resize_table_size_to_contents()
         self.data = self.db.get_video(project_id, time_flag=True, start_time=self.start_time.text(),
-                                      end_time=self.end_time.text())
+                                      end_time=self.end_time.text() + ' 23:59:59')
         self.insert_data_to_table()
 
     def defect_management(self, video_id):
@@ -1008,7 +1008,7 @@ class MainWindow(QMainWindow):
             ('道路名称', '管道编号', '管道类型', '管道材质', '管径(mm)', '缺陷名称', '等级', '缺陷性质', '缺陷位置/帧', '检测日期', '判读日期'))
         self.resize_table_size_to_contents()
         self.data = self.db.get_defect(video_id, time_flag=True, start_time=self.start_time.text(),
-                                       end_time=self.end_time.text())
+                                       end_time=self.end_time.text() + ' 23:59:59')
         self.insert_data_to_table()
 
     def robot_management(self):
@@ -1084,10 +1084,10 @@ class MainWindow(QMainWindow):
             if self.is_searching:
                 self.data = self.db.get_project_detailed(self.search_input.text(), time_flag=True,
                                                          start_time=self.start_time.text(),
-                                                         end_time=self.end_time.text())
+                                                         end_time=self.end_time.text() + ' 23:59:59')
             else:
                 self.data = self.db.get_project_detailed(time_flag=True, start_time=self.start_time.text(),
-                                                         end_time=self.end_time.text())
+                                                         end_time=self.end_time.text() + ' 23:59:59')
             self.is_searching = False
             self.insert_data_to_table()
         else:
@@ -1098,10 +1098,10 @@ class MainWindow(QMainWindow):
             if self.is_searching:
                 self.data = self.db.get_project_statistic(self.search_input.text(), time_flag=True,
                                                           start_time=self.start_time.text(),
-                                                          end_time=self.end_time.text())
+                                                          end_time=self.end_time.text() + ' 23:59:59')
             else:
                 self.data = self.db.get_project_statistic(time_flag=True, start_time=self.start_time.text(),
-                                                          end_time=self.end_time.text())
+                                                          end_time=self.end_time.text() + ' 23:59:59')
             self.is_searching = False
             self.insert_data_to_table()
 
@@ -1252,8 +1252,8 @@ class MainWindow(QMainWindow):
         if current_row_number is None:
             self.is_edit_project = False
             self.edit_project_id = None
-            self.show_table.setRowCount(self.show_table.rowCount() + 1)  # add new row.
-            row = self.show_table.rowCount() - 1
+            # self.show_table.setRowCount(self.show_table.rowCount() + 1)  # add new row.
+            row = len(self.data)
         else:
             self.is_edit_project = True
             self.edit_project_id = self.data[current_row_number][0]

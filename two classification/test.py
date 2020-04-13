@@ -1,5 +1,6 @@
 from ghost_mobilenetv2 import GhostMobileNetV2
 from mobilenetv2_1 import MobileNetV2_1
+from mobilenetv2_2 import MobileNetV2_2
 from mobilenetv3 import MobileNetV3
 from torch.autograd import Variable
 from torchvision import transforms
@@ -19,7 +20,8 @@ transform = transforms.Compose([
 
 weight_names = ['mobilenetv2-result.weight', 'mobilenetv3 small-result.weight', 'mobilenetv3 large-result.weight',
                 'ghostnet-result.weight',
-                'mobilenetv2-with-ghost-module-result.weight', 'mobilenetv2_1-result.weight', 'vgg16-model.pth']
+                'mobilenetv2-with-ghost-module-result.weight', 'mobilenetv2_1-result.weight', 'vgg16-model.pth',
+                'mobilenetv2_2-result.weight']
 
 images = glob.glob('data/val/normal/*')
 t = glob.glob('data/val/abnormal/*')
@@ -55,6 +57,9 @@ for weight_name in weight_names:
         model.load_state_dict(torch.load('results/results2/mobilenetv2_1-result.weight'))
     elif weight_name == 'vgg16-model.pth':
         model = torch.load('results/results1/vgg16-model.pth').cuda()
+    elif weight_name == 'mobilenetv2_2-result.weight':
+        model = MobileNetV2_2(num_classes=2).cuda()
+        model.load_state_dict(torch.load('results/results2/mobilenetv2_2-result.weight'))
     model.eval().cuda()
     res = {0: 0, 1: 0}  # 0 is abnormal and 1 is normal.
     start = time.time()

@@ -1290,13 +1290,14 @@ class Edit(QMainWindow):
             img_ = self.main_window.transform(img_).cuda()
             img_.unsqueeze_(dim=0)
             # self.main_window.two_classes_model.eval()
-            out = self.main_window.two_classes_model(img_)
-            self.result = int(torch.max(out, 1)[1].item())
+            # out = self.main_window.two_classes_model(img_)
+            # self.result = int(torch.max(out, 1)[1].item())
+            self.result = 0
         if self.result == 0:  # abnormal.
             # self.timer.stop()
             img, count = self.main_window.yolov3_detect(img)
-            if count > 0:
-                self.manual()
+            # if count > 0:
+            #     self.manual()
             # self.timer.start()
             # if count > 0:
             #     self.jump_frame = self.timer.fps * 10
