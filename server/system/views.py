@@ -13,11 +13,16 @@ import torch
 import base64
 import cv2
 import random
+from .UNet import UNet
+from torchvision import transforms
 
 img_size = None
 yolov3_model = None
+unet_model = None
 names = None
 colors = None
+
+style = 'unet'
 
 
 def index(request):
@@ -32,8 +37,28 @@ video = cv2.VideoCapture('F:/Graduation-Project/排水管道系统/PipeSight/Vid
 current_frame = 1
 total_frame = video.get(cv2.CAP_PROP_FRAME_COUNT)
 
-longitude = 116.397428
-latitude = 39.90923
+meter = 9e-7
+longitudes_ = [116.3975, 116.3975, 116.3974974, 116.3974974, 116.3971, 116.39571, 116.39557, 116.39289, 116.39219,
+               116.3919, 116.3919004, 116.3919004, 116.39296, 116.39447, 116.39558]
+latitudes_ = [39.90801, 39.90795, 39.9079546, 39.9079546, 39.90795, 39.90793, 39.90793, 39.90783, 39.90781, 39.90752,
+              39.9075183, 39.9075183, 39.90754, 39.9076, 39.90763]
+latitudes = []
+longitudes = []
+insert_per = int(total_frame / len(longitudes_))
+for i in range(len(longitudes_) - 1):
+    add_ = (longitudes_[i + 1] - longitudes_[i]) / insert_per
+    for j in range(insert_per):
+        longitudes.append(longitudes_[i] + j * add_)
+for i in range(len(latitudes_) - 1):
+    add_ = (latitudes_[i + 1] - latitudes_[i]) / insert_per
+    for j in range(insert_per):
+        latitudes.append(latitudes_[i] + j * add_)
+while len(longitudes) < total_frame:
+    longitudes.append(longitudes[-1])
+while len(latitudes) < total_frame:
+    latitudes.append(latitudes[-1])
+longitude = longitudes[0]
+latitude = latitudes[0]
 
 
 def handle(request):
@@ -48,7 +73,10 @@ def handle(request):
         current_frame = 1
         video.set(cv2.CAP_PROP_POS_FRAMES, 1)
     try:
-        img, count = yolov3_detect(img)
+        if style == 'yolov3':
+            img, count = yolov3_detect(img)
+        elif style == 'unet':
+            img, count = unet_detect(img)
     except:
         print('detect failed.')
     # cv2 image转base64
@@ -57,8 +85,12 @@ def handle(request):
     '''test gps'''
     '''START'''
     # 为了同时传输图像和经纬度坐标
-    longitude += (random.random() - 0.5) / 100
-    latitude += (random.random() - 0.5) / 100
+    if current_frame < len(longitudes):
+        longitude = longitudes[current_frame]
+        latitude = latitudes[current_frame]
+    else:
+        longitude += (random.random() - 0.5) / 2000
+        latitude += (random.random() - 0.5) / 4000
     latitude_ = '{:.10f}'.format(latitude)
     longitude_ = '{:.10f}'.format(longitude)
     max_len = max(len(latitude_), len(longitude_))
@@ -142,4 +174,50 @@ def yolov3_detect(img0):
     return img0, count
 
 
-load_yolov3()
+def load_unet():
+    global unet_model
+    unet_model = UNet(n_class=1).cuda()
+    unet_model.load_state_dict(torch.load(r'F:\Graduation-Project\实现\unet\data\[32, 64, 128, 256].weight'))
+
+
+trans = transforms.Compose([
+    transforms.ToTensor(),
+])
+
+
+def unet_detect(image):
+    global unet_model
+    image_size = 256
+    h, w = image.shape[:2]
+    image2 = cv2.resize(image, (image_size, image_size)) / 255.0
+    image2 = np.array(image2)
+    image2 = trans(image2)
+    image2 = torch.unsqueeze(image2, 0).cuda()
+    image2 = image2.type(torch.cuda.FloatTensor)
+    result = unet_model(image2)
+    result = result > 0.2
+    result = result.view(result.size(0), result.size(2), result.size(3), result.size(1))
+    result = result.cpu().numpy()
+
+    img = result[0] * 210.0
+    count = 0
+    try:
+        img = cv2.resize(img, (w, h))
+        img2 = np.zeros_like(image)
+        #         img2[:,:,0] = img
+        img2[:, :, 1] = img
+        #         img2[:,:,2] = img
+        #         print(img.shape)
+        out_img = cv2.add(image, img2)
+        if np.mean(img2) > 0.9:
+            count = 1
+    except:
+        print('failed.')
+        return image, 0
+    return out_img, count
+
+
+if style == 'yolov3':
+    load_yolov3()
+elif style == 'unet':
+    load_unet()
