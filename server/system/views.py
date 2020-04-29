@@ -177,7 +177,7 @@ def yolov3_detect(img0):
 def load_unet():
     global unet_model
     unet_model = UNet(n_class=1).cuda()
-    unet_model.load_state_dict(torch.load(r'F:\Graduation-Project\实现\unet\data\[32, 64, 128, 256].weight'))
+    unet_model.load_state_dict(torch.load(r'F:\Graduation-Project\实现\unet\data\[32, 64, 128, 256] 1 class.weight'))
 
 
 trans = transforms.Compose([
@@ -204,9 +204,9 @@ def unet_detect(image):
     try:
         img = cv2.resize(img, (w, h))
         img2 = np.zeros_like(image)
-        #         img2[:,:,0] = img
-        img2[:, :, 1] = img
-        #         img2[:,:,2] = img
+        #         img2[:,:,0] = img # b
+        img2[:, :, 1] = img  # g
+        #         img2[:,:,2] = img#r
         #         print(img.shape)
         out_img = cv2.add(image, img2)
         if np.mean(img2) > 0.9:
