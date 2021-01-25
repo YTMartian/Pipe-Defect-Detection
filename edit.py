@@ -1288,6 +1288,7 @@ class Edit(QMainWindow):
             # result = self.detect_one_frame(img)
             img_ = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
             img_ = self.main_window.transform(img_).cuda()
+
             img_.unsqueeze_(dim=0)
             # self.main_window.two_classes_model.eval()
             # out = self.main_window.two_classes_model(img_)

@@ -1,7 +1,12 @@
-from docx.shared import Mm
 from docxtpl import DocxTemplate, InlineImage
+from matplotlib import font_manager as fm
+import matplotlib.pyplot as plt
 from tkinter import filedialog
+from docx.shared import Mm
+from matplotlib import cm
 from tkinter import *
+import numpy as np
+import matplotlib
 import datetime
 import shutil
 import time
@@ -12,19 +17,27 @@ import os
 auto update content table:https://blog.csdn.net/weixin_42670653/article/details/81476147
 '''
 
+font = {
+    'family': 'SimHei',
+    'weight': 'bold',
+    'size': 12
+}
+matplotlib.rc("font", **font)
+
 
 class Word:
     def __init__(self, db):
         self.db = db
-        self.doc = DocxTemplate('template.docx')
+        self.doc = DocxTemplate('template2.docx')
         self.path = str(time.time()) + '.docx'
         self.pic_path = './images/'
 
     def generate(self, project_id):
         try:
             return self.generate_word(project_id)
-        except:
+        except Exception as e:
             print('generate word failed.')
+            print(e)
             return False
 
     def generate_word(self, project_id):
@@ -78,6 +91,126 @@ class Word:
                 # print(self.pic_path + video['video_file_name'] + '-' + defect['time_in_video'])
                 cv2.imwrite(self.pic_path + video['video_file_name'] + '-' + defect['time_in_video'] + '.jpg', img)
             cap.release()
+
+        # generate pipe_defect_summary statistic chart.
+        structure_defect_names = ['支管暗接', '变形', '错口', '异物穿入', '腐蚀', '破裂', '起伏', '渗漏', '脱节', '接口材料脱落']
+        structure_defect_count = [pipe_defect_summary['defects_count']['AJtotal'],
+                                  pipe_defect_summary['defects_count']['BXtotal'],
+                                  pipe_defect_summary['defects_count']['CKtotal'],
+                                  pipe_defect_summary['defects_count']['CRtotal'],
+                                  pipe_defect_summary['defects_count']['FStotal'],
+                                  pipe_defect_summary['defects_count']['PLtotal'],
+                                  pipe_defect_summary['defects_count']['QFtotal'],
+                                  pipe_defect_summary['defects_count']['SLtotal'],
+                                  pipe_defect_summary['defects_count']['TJtotal'],
+                                  pipe_defect_summary['defects_count']['TLtotal']]
+        labels = []
+        sizes = []
+        total = sum(structure_defect_count)
+        for i in range(len(structure_defect_names)):
+            if structure_defect_count[i] == 0:
+                continue
+            labels.append(structure_defect_names[i])
+            sizes.append(structure_defect_count[i] / total)
+        fig, axes = plt.subplots(figsize=(10, 7), ncols=2)  # 1000x500
+        ax1, ax2 = axes.ravel()
+        colors = cm.rainbow(np.arange(len(sizes)) / len(sizes))  # colormaps: Paired, autumn, rainbow, gray,spring,Darks
+        patches, texts, autotexts = ax1.pie(sizes, labels=labels, autopct='%1.0f%%',
+                                            shadow=False, startangle=170, colors=colors)
+        ax1.axis('equal')
+        proptease = fm.FontProperties()
+        proptease.set_size('medium')
+        # font size include: ‘xx-small’,x-small’,'small’,'medium’,‘large’,‘x-large’,‘xx-large’ or number, e.g. '12'
+        plt.setp(autotexts, fontproperties=proptease)
+        plt.setp(texts, fontproperties=proptease)
+
+        ax2.axis('off')
+        ax2.legend(patches, labels, loc='center')
+
+        plt.tight_layout()
+        plt.savefig(self.pic_path + 'structure_defect_summary_statistic.png')
+
+        def get_structure_grade_total(i):
+            i = str(i)
+            return sum(
+                [pipe_defect_summary['defects_count']['AJ' + i],
+                 pipe_defect_summary['defects_count']['BX' + i],
+                 pipe_defect_summary['defects_count']['CK' + i],
+                 pipe_defect_summary['defects_count']['CR' + i],
+                 pipe_defect_summary['defects_count']['FS' + i],
+                 pipe_defect_summary['defects_count']['PL' + i],
+                 pipe_defect_summary['defects_count']['QF' + i],
+                 pipe_defect_summary['defects_count']['SL' + i],
+                 pipe_defect_summary['defects_count']['TJ' + i],
+                 pipe_defect_summary['defects_count']['TL' + i]])
+
+        pipe_defect_summary['defects_count']['structure_grade1_total'] = get_structure_grade_total(1)
+        pipe_defect_summary['defects_count']['structure_grade2_total'] = get_structure_grade_total(2)
+        pipe_defect_summary['defects_count']['structure_grade3_total'] = get_structure_grade_total(3)
+        pipe_defect_summary['defects_count']['structure_grade4_total'] = get_structure_grade_total(4)
+        pipe_defect_summary['defects_count']['structure_grade_total'] = sum(
+            [pipe_defect_summary['defects_count']['structure_grade{}_total'.format(i)] for i in range(1, 5)])
+        function_defect_names = ['沉积', '残墙、坝根', '浮渣', '结垢', '树根', '障碍物']
+        function_defect_count = [pipe_defect_summary['defects_count']['CJtotal'],
+                                 pipe_defect_summary['defects_count']['CQtotal'],
+                                 pipe_defect_summary['defects_count']['FZtotal'],
+                                 pipe_defect_summary['defects_count']['JGtotal'],
+                                 pipe_defect_summary['defects_count']['SGtotal'],
+                                 pipe_defect_summary['defects_count']['ZWtotal']]
+        labels.clear()
+        sizes.clear()
+        total = sum(function_defect_count)
+        for i in range(len(function_defect_names)):
+            if function_defect_count[i] == 0:
+                continue
+            labels.append(function_defect_names[i])
+            sizes.append(function_defect_count[i] / total)
+        fig, axes = plt.subplots(figsize=(10, 7), ncols=2)  # 1000x500
+        ax1, ax2 = axes.ravel()
+        colors = cm.rainbow(np.arange(len(sizes)) / len(sizes))  # colormaps: Paired, autumn, rainbow, gray,spring,Darks
+        patches, texts, autotexts = ax1.pie(sizes, labels=labels, autopct='%1.0f%%',
+                                            shadow=False, startangle=170, colors=colors)
+        ax1.axis('equal')
+        proptease = fm.FontProperties()
+        proptease.set_size('medium')
+        # font size include: ‘xx-small’,x-small’,'small’,'medium’,‘large’,‘x-large’,‘xx-large’ or number, e.g. '12'
+        plt.setp(autotexts, fontproperties=proptease)
+        plt.setp(texts, fontproperties=proptease)
+
+        ax2.axis('off')
+        ax2.legend(patches, labels, loc='center')
+
+        plt.tight_layout()
+        plt.savefig(self.pic_path + 'function_defect_summary_statistic.png')
+
+        def get_function_grade_total(i):
+            i = str(i)
+            return sum(
+                [pipe_defect_summary['defects_count']['CJ' + i],
+                 pipe_defect_summary['defects_count']['CQ' + i],
+                 pipe_defect_summary['defects_count']['FZ' + i],
+                 pipe_defect_summary['defects_count']['JG' + i],
+                 pipe_defect_summary['defects_count']['SG' + i],
+                 pipe_defect_summary['defects_count']['ZW' + i],
+                 pipe_defect_summary['defects_count']['QF' + i],
+                 pipe_defect_summary['defects_count']['SL' + i],
+                 pipe_defect_summary['defects_count']['TJ' + i],
+                 pipe_defect_summary['defects_count']['TL' + i]])
+
+        pipe_defect_summary['defects_count']['function_grade1_total'] = get_function_grade_total(1)
+        pipe_defect_summary['defects_count']['function_grade2_total'] = get_function_grade_total(2)
+        pipe_defect_summary['defects_count']['function_grade3_total'] = get_function_grade_total(3)
+        pipe_defect_summary['defects_count']['function_grade4_total'] = get_function_grade_total(4)
+        pipe_defect_summary['defects_count']['function_grade_total'] = sum(
+            [pipe_defect_summary['defects_count']['function_grade{}_total'.format(i)] for i in range(1, 5)])
+
+        structure_defect_summary_statistic = InlineImage(self.doc,
+                                                         self.pic_path + 'structure_defect_summary_statistic.png',
+                                                         height=Mm(120))
+        function_defect_summary_statistic = InlineImage(self.doc,
+                                                        self.pic_path + 'function_defect_summary_statistic.png',
+                                                        height=Mm(120))
+
         for i in range(len(videos)):
             videos[i]['images'] = []
             temp = {}
@@ -128,7 +261,9 @@ class Word:
             'pipes': pipes,
             'manholes': manholes,
             'pipe_defect_summary': pipe_defect_summary,
-            'videos': videos
+            'videos': videos,
+            'structure_defect_summary_statistic': structure_defect_summary_statistic,
+            'function_defect_summary_statistic': function_defect_summary_statistic
         }
         self.doc.render(context)
         self.doc.save(self.path)
