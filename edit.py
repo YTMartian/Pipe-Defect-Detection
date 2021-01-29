@@ -1130,7 +1130,7 @@ class Edit(QMainWindow):
         defect_grade_id_name = self.defect_grade_widget.currentText()
         data['defect_grade_id'] = 1
         for i in self.defect_data['defect_grade']:
-            if i[1] == defect_grade_id_name:
+            if str(i[2]) == str(data['defect_type_id']) and i[1] == defect_grade_id_name:
                 data['defect_grade_id'] = i[0]
         data['defect_distance'] = self.defect_distance_widget.text()
         data['defect_length'] = self.defect_length_widget.text()

@@ -31,6 +31,7 @@ class Word:
         self.doc = DocxTemplate('template2.docx')
         self.path = str(time.time()) + '.docx'
         self.pic_path = './images/'
+        self.colors = ['00B0F0', 'FFFF00', 'FFC000', 'FF0000']
 
     def generate(self, project_id):
         try:
@@ -211,6 +212,44 @@ class Word:
                                                         self.pic_path + 'function_defect_summary_statistic.png',
                                                         height=Mm(120))
 
+        # 管道缺陷汇总表
+        all_structure_defects = []
+        all_function_defects = []
+        for video in videos:
+            temp = {'pipe_number': video['start_manhole_no'] + '~' + video['end_manhole_no'],
+                    'pipe_diameter': video['pipe_diameter'],
+                    'pipe_material': video['pipe_material'],
+                    'detection_length': video['detection_length']
+                    }
+            for defect in video['defects']:
+                temp['defect_distance'] = defect['defect_distance']
+                temp['defect_type'] = defect['defect_type'][3:-1]
+                temp['defect_grade'] = defect['grade']
+                list1 = [1 if str(i) in defect['grade'] else 0 for i in range(1, 5)]
+                color_index = list1.index(1)
+                temp['color'] = self.colors[color_index]
+                if temp['defect_type'] in structure_defect_names:
+                    temp['number'] = len(all_structure_defects) + 1
+                    all_structure_defects.append(temp.copy())
+                elif temp['defect_type'] in function_defect_names:
+                    temp['number'] = len(all_function_defects) + 1
+                    all_function_defects.append(temp.copy())
+                else:
+                    print('Error word.py 1')
+        # 管道状况评估表颜色
+        grade = ['Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ']
+        for video in videos:
+            if video['structure_defect_grade'] in grade:
+                structure_color_index = grade.index(video['structure_defect_grade'])
+                video['structure_evaluation_color'] = self.colors[structure_color_index]
+            else:
+                video['structure_evaluation_color'] = 'FFFFFF'
+            if video['function_defect_grade'] in grade:
+                function_color_index = grade.index(video['function_defect_grade'])
+                video['function_evaluation_color'] = self.colors[function_color_index]
+            else:
+                video['function_evaluation_color'] = 'FFFFFF'
+        # 管道检测成果表
         for i in range(len(videos)):
             videos[i]['images'] = []
             temp = {}
@@ -231,6 +270,43 @@ class Word:
                     temp['right_image'] = ''
                 temp['right_number'] = j + 2
                 videos[i]['images'].append(temp.copy())
+
+        # 检测结论一览表
+        summary = {'structure_0_count': 0, 'structure_1_count': 0,
+                   'structure_2_count': 0, 'structure_3_count': 0,
+                   'structure_4_count': 0,
+                   'function_0_count': 0, 'function_1_count': 0,
+                   'function_2_count': 0, 'function_3_count': 0,
+                   'function_4_count': 0,
+                   'structure_0_percent': '0.00%', 'structure_1_percent': '0.00%',
+                   'structure_2_percent': '0.00%', 'structure_3_percent': '0.00%',
+                   'structure_4_percent': '0.00%',
+                   'function_0_percent': '0.00%', 'function_1_percent': '0.00%',
+                   'function_2_percent': '0.00%', 'function_3_percent': '0.00%',
+                   'function_4_percent': '0.00%',
+                   }
+        for video in videos:
+            if video['structure_defect_grade'] in grade:
+                grade_index = grade.index(video['structure_defect_grade'])
+                summary['structure_{}_count'.format(grade_index + 1)] += 1
+            if video['function_defect_grade'] in grade:
+                grade_index = grade.index(video['function_defect_grade'])
+                summary['function_{}_count'.format(grade_index + 1)] += 1
+        for i in range(5):
+            summary['structure_{}_percent'.format(i)] = '{:.2f}%'.format(
+                100 * summary['structure_{}_count'.format(i)] / len(videos))
+            summary['function_{}_percent'.format(i)] = '{:.2f}%'.format(
+                100 * summary['function_{}_count'.format(i)] / len(videos))
+        # 缺陷管段情况汇总表
+        summary['structure_defect_count'] = sum([summary['structure_{}_count'.format(i)] for i in range(1, 5)])
+        summary['function_defect_count'] = sum([summary['function_{}_count'.format(i)] for i in range(1, 5)])
+        summary['structure_defect_percent'] = '{:.2f}%'.format(100 * summary['structure_defect_count'] / len(videos))
+        summary['function_defect_percent'] = '{:.2f}%'.format(100 * summary['function_defect_count'] / len(videos))
+        for i in range(1, 5):
+            summary['structure_defect_{}_percent'.format(i)] = '{:.2f}%'.format(
+                100 * summary['structure_{}_count'.format(i)] / summary['structure_defect_count'])
+            summary['function_defect_{}_percent'.format(i)] = '{:.2f}%'.format(
+                100 * summary['function_{}_count'.format(i)] / summary['function_defect_count'])
 
         context = {
             'project_name': project_detailed_data[2],
@@ -263,7 +339,10 @@ class Word:
             'pipe_defect_summary': pipe_defect_summary,
             'videos': videos,
             'structure_defect_summary_statistic': structure_defect_summary_statistic,
-            'function_defect_summary_statistic': function_defect_summary_statistic
+            'function_defect_summary_statistic': function_defect_summary_statistic,
+            'all_structure_defects': all_structure_defects,
+            'all_function_defects': all_function_defects,
+            'summary': summary
         }
         self.doc.render(context)
         self.doc.save(self.path)

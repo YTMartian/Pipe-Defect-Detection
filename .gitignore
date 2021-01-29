@@ -5,3 +5,5 @@ model
 build
 dist
 *.spec
+~$mplate1.docx
+~$mplate2.docx

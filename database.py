@@ -92,7 +92,7 @@ class Database:
         res = [str(data[0][i]) for i in range(0, 18)]
         return res
 
-    def get_project_statistic(self, search_text=None,time_flag=False, start_time='', end_time=''):
+    def get_project_statistic(self, search_text=None, time_flag=False, start_time='', end_time=''):
         cursor = self.conn.cursor()
         if time_flag:
             if search_text is None:
@@ -156,8 +156,12 @@ class Database:
                     continue
                 p[str(start_manhole_no) + str(end_manhole_no)] = True
                 pipe_amount += 1
-                pipe = {'number': pipe_amount, 'name': pipe_type, 'diameter': pipe_diameter,
-                        'pipe_length': pipe_length, 'detection_length': detection_length}
+                pipe = {'number': pipe_amount,
+                        'name': pipe_type,
+                        'diameter': pipe_diameter,
+                        'pipe_length': pipe_length,
+                        'detection_length': detection_length
+                        }
                 pipes.append(pipe.copy())
             temp.append(pipe_amount)
             # get pipe total length.
@@ -383,12 +387,25 @@ class Database:
     def add_project(self, data, project_id):
         if project_id is not None:
             sql = "UPDATE project SET project_no='{}',project_name='{}',project_address='{}',staff_id={},start_date='{}',report_no='{}',requester_unit='{}',construction_unit='{}',design_unit='{}',build_unit='{}',supervisory_unit='{}',detection_id={},move_id={},plugging_id={},drainage_id={},dredging_id={} WHERE project_id={}".format(
-                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
-                data[11], data[12], data[13], data[14], data[15], project_id)
+                data[0], data[1],
+                data[2], data[3],
+                data[4], data[5],
+                data[6], data[7],
+                data[8], data[9],
+                data[10], data[11],
+                data[12], data[13],
+                data[14], data[15],
+                project_id)
         else:
             sql = "INSERT INTO project(project_no,project_name,project_address,staff_id,start_date,report_no,requester_unit,construction_unit,design_unit,build_unit,supervisory_unit,detection_id,move_id,plugging_id,drainage_id,dredging_id) VALUES('{}','{}','{}',{},'{}','{}','{}','{}','{}','{}','{}',{},{},{},{},{})".format(
-                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10],
-                data[11], data[12], data[13], data[14], data[15])
+                data[0], data[1],
+                data[2], data[3],
+                data[4], data[5],
+                data[6], data[7],
+                data[8], data[9],
+                data[10], data[11],
+                data[12], data[13],
+                data[14], data[15])
         try:
             cursor = self.conn.cursor()
             cursor.execute(sql)
@@ -660,22 +677,46 @@ class Database:
             start_manhole_id = temp_data[0][0]
             end_manhole_id = temp_data[0][1]
             sql = "UPDATE manhole set manhole_no='{}',manhole_type_id={},manhole_material_id={},manhole_cover_id={},manhole_longitude={},manhole_latitude={},internal_defect='{}',external_defect='{}',pipe_elevation={} where manhole_id={}".format(
-                data['start_manhole_no'], data['start_manhole_type_id'], data['start_manhole_material_id'],
-                data['start_manhole_cover_id'], data['start_manhole_longitude'], data['start_manhole_latitude'],
-                data['start_internal_defect'], data['start_external_defect'], data['start_pipe_elevation'],
+                data['start_manhole_no'],
+                data['start_manhole_type_id'],
+                data['start_manhole_material_id'],
+                data['start_manhole_cover_id'],
+                data['start_manhole_longitude'],
+                data['start_manhole_latitude'],
+                data['start_internal_defect'],
+                data['start_external_defect'],
+                data['start_pipe_elevation'],
                 start_manhole_id)
             cursor.execute(sql)
             sql = "UPDATE manhole SET manhole_no='{}',manhole_type_id={},manhole_material_id={},manhole_cover_id={},manhole_longitude={},manhole_latitude={},internal_defect='{}',external_defect='{}',pipe_elevation={} WHERE manhole_id={}".format(
-                data['end_manhole_no'], data['end_manhole_type_id'], data['end_manhole_material_id'],
-                data['end_manhole_cover_id'], data['end_manhole_longitude'], data['end_manhole_latitude'],
-                data['end_internal_defect'], data['end_external_defect'], data['end_pipe_elevation'],
+                data['end_manhole_no'],
+                data['end_manhole_type_id'],
+                data['end_manhole_material_id'],
+                data['end_manhole_cover_id'],
+                data['end_manhole_longitude'],
+                data['end_manhole_latitude'],
+                data['end_internal_defect'],
+                data['end_external_defect'],
+                data['end_pipe_elevation'],
                 end_manhole_id)
             cursor.execute(sql)
             sql = "UPDATE video SET staff_id={},road_name='{}',pipe_type_id={},section_shape_id={},joint_form_id={},pipe_material_id={},pipe_diameter={},start_pipe_depth={},end_pipe_depth={},pipe_length={},detection_length={},detection_direction={},construction_year='{}',regional_importance_id={},soil_id={},video_remark='{}' WHERE video_id={}".format(
-                data['staff_id'], data['road_name'], data['pipe_type_id'], data['section_shape_id'],
-                data['joint_form_id'], data['pipe_material_id'], data['pipe_diameter'], data['start_pipe_depth'],
-                data['end_pipe_depth'], data['pipe_length'], data['detection_length'], data['detection_direction'],
-                data['construction_year'], data['regional_importance_id'], data['soil_id'], data['video_remark'],
+                data['staff_id'],
+                data['road_name'],
+                data['pipe_type_id'],
+                data['section_shape_id'],
+                data['joint_form_id'],
+                data['pipe_material_id'],
+                data['pipe_diameter'],
+                data['start_pipe_depth'],
+                data['end_pipe_depth'],
+                data['pipe_length'],
+                data['detection_length'],
+                data['detection_direction'],
+                data['construction_year'],
+                data['regional_importance_id'],
+                data['soil_id'],
+                data['video_remark'],
                 data['video_id'])
             cursor.execute(sql)
             self.conn.commit()
@@ -688,9 +729,17 @@ class Database:
         try:
             cursor = self.conn.cursor()
             sql = "UPDATE defect SET time_in_video={},defect_type_id={},defect_distance={},defect_length={},clock_start={},clock_end={},defect_grade_id={},defect_remark='{}',defect_date='{}',defect_attribute='{}' WHERE defect_id={}".format(
-                data['time_in_video'], data['defect_type_id'], data['defect_distance'], data['defect_length'],
-                data['clock_start'], data['clock_end'], data['defect_grade_id'], data['defect_remark'],
-                data['defect_date'], data['defect_attribute'], data['defect_id'])
+                data['time_in_video'],
+                data['defect_type_id'],
+                data['defect_distance'],
+                data['defect_length'],
+                data['clock_start'],
+                data['clock_end'],
+                data['defect_grade_id'],
+                data['defect_remark'],
+                data['defect_date'],
+                data['defect_attribute'],
+                data['defect_id'])
             cursor.execute(sql)
             return True
         except:
@@ -716,11 +765,10 @@ class Database:
     def add_defect(self, data):
         try:
             cursor = self.conn.cursor()
-            sql = "INSERT INTO defect(video_id,time_in_video,defect_date) VALUES({},{},'{}')".format(data['video_id'],
-                                                                                                     data[
-                                                                                                         'time_in_video'],
-                                                                                                     data[
-                                                                                                         'defect_date'])
+            sql = "INSERT INTO defect(video_id,time_in_video,defect_date) VALUES({},{},'{}')".format(
+                data['video_id'],
+                data['time_in_video'],
+                data['defect_date'])
             cursor.execute(sql)
             defect_id = cursor.lastrowid
             res = {}
@@ -777,20 +825,24 @@ class Database:
             for video in videos:
                 video_id = video[0]
                 data = self.get_video_by_video_id(video_id)
-                temp = {'number': number, 'manhole_no': data['start_manhole_no'],
+                temp = {'number': number,
+                        'manhole_no': data['start_manhole_no'],
                         'manhole_type': manhole_type[data['start_manhole_type_id'] - 1][1],
                         'manhole_material': manhole_material[data['start_manhole_material_id'] - 1][1],
                         'manhole_cover': manhole_cover[data['start_manhole_cover_id'] - 1][1],
                         'external_defect': data['start_external_defect'],
-                        'internal_defect': data['start_internal_defect']}
+                        'internal_defect': data['start_internal_defect']
+                        }
                 manholes.append(temp.copy())
                 number += 1
-                temp = {'number': number, 'manhole_no': data['end_manhole_no'],
+                temp = {'number': number,
+                        'manhole_no': data['end_manhole_no'],
                         'manhole_type': manhole_type[data['end_manhole_type_id'] - 1][1],
                         'manhole_material': manhole_material[data['end_manhole_material_id'] - 1][1],
                         'manhole_cover': manhole_cover[data['end_manhole_cover_id'] - 1][1],
                         'external_defect': data['end_external_defect'],
-                        'internal_defect': data['end_internal_defect']}
+                        'internal_defect': data['end_internal_defect']
+                        }
                 manholes.append(temp.copy())
                 number += 1
 
@@ -801,9 +853,14 @@ class Database:
 
     def get_pipe_defect_summary(self, project_id):
         try:
-            res = {'pipe_with_defect_amount': 0, 'pipe_with_structure_defect_amount': 0,
-                   'pipe_with_function_defect_amount': 0, 'pipe_with_both_defect_amount': 0,
-                   'pipe_without_defect_amount': 0, 'pipe_defects': [], 'defects_count': {}}
+            res = {'pipe_with_defect_amount': 0,
+                   'pipe_with_structure_defect_amount': 0,
+                   'pipe_with_function_defect_amount': 0,
+                   'pipe_with_both_defect_amount': 0,
+                   'pipe_without_defect_amount': 0,
+                   'pipe_defects': [],
+                   'defects_count': {}
+                   }
             number = 1
             for i in self.structure_defect_types + self.function_defect_types:
                 for j in range(1, 5):
@@ -829,8 +886,11 @@ class Database:
                 with_structure_flag = False
                 with_function_flag = False
                 for defect in defects:
-                    t = {'defect_distance': defect[12], 'defect_grade': defect[7][0],
-                         'defect_type': defect[6][3:len(defect[6]) - 1], 'defect_length': defect[13]}
+                    t = {'defect_distance': defect[12],
+                         'defect_grade': defect[7][0],
+                         'defect_type': defect[6][3:len(defect[6]) - 1],
+                         'defect_length': defect[13]
+                         }
                     defect_type_code = defect[6][0:2]
                     res['defects_count'][defect_type_code + str(t['defect_grade'])] += 1
                     res['defects_count'][defect_type_code + 'total'] += 1
@@ -926,11 +986,15 @@ class Database:
                             function_n2 += 1
                         data['function_max_score'] = max(data['function_max_score'], float(defect['score']))
 
-                    temp = {'number': number, 'defect_distance': str(defect['defect_distance']),
+                    temp = {'number': number,
+                            'defect_distance': str(defect['defect_distance']),
                             'defect_type': str(defect['defect_type']),
                             'defect_attribute': str(defect['defect_attribute']),
                             'time_in_video': str(defect['time_in_video']),
-                            'score': str(defect['score']), 'grade': str(defect['defect_grade'])[:2]}  # should be str.
+                            'score': str(defect['score']),
+                            'grade': str(defect['defect_grade'])[:2],
+                            'defect_grade_id': defect['defect_grade_id']
+                            }  # should be str.
                     number += 1
                     data['defects'].append(temp.copy())
 
